@@ -1,776 +1,1629 @@
-import { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
-const data = {
+/* ─────────────────────────────────────────────
+   INLINE SVG ICON SYSTEM (no lucide-react)
+   24x24 viewBox, stroke-based, 2px stroke
+   ───────────────────────────────────────────── */
+const ICON_PATHS = {
+  bookOpen: "M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z",
+  brain: "M9.5 2a3.5 3.5 0 0 0-3 5.1A3.5 3.5 0 0 0 5 10.5V11a4 4 0 0 0 4 4h.5v4M14.5 2a3.5 3.5 0 0 1 3 5.1A3.5 3.5 0 0 1 19 10.5V11a4 4 0 0 1-4 4h-.5v4M12 7v10M9 7.5h6",
+  layers: "M12 3 2 8l10 5 10-5-10-5Zm-10 9 10 5 10-5M2 16l10 5 10-5",
+  database: "M4 6c0-1.657 3.582-3 8-3s8 1.343 8 3-3.582 3-8 3-8-1.343-8-3Zm0 0v6c0 1.657 3.582 3 8 3s8-1.343 8-3V6m-16 6v6c0 1.657 3.582 3 8 3s8-1.343 8-3v-6",
+  spark: "M13 2 4 14h6l-1 8 9-12h-6l1-8Z",
+  users: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm11 14v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75",
+  target: "M12 3v4M12 17v4M3 12h4M17 12h4M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M12 12m-8 0a8 8 0 1 0 16 0a8 8 0 1 0 -16 0",
+  gitBranch: "M6 3v12a3 3 0 1 0 2 0V9h6a3 3 0 1 1 0 6h-2M6 6a3 3 0 1 0 0-6a3 3 0 0 0 0 6Zm10 18a3 3 0 1 0 0-6a3 3 0 0 0 0 6Z",
+  checkCircle: "M9 12l2 2 4-4M12 22a10 10 0 1 0 0-20a10 10 0 0 0 0 20Z",
+  alertTriangle: "M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0ZM12 9v4M12 17h.01",
+  chartBar: "M4 20V10M10 20V4M16 20v-7M22 20v-12",
+  search: "m21 21-4.35-4.35M10 18a8 8 0 1 1 0-16a8 8 0 0 1 0 16Z",
+  arrowRight: "M5 12h14M13 5l7 7-7 7",
+  chevronDown: "m6 9 6 6 6-6",
+  chevronRight: "m9 6 6 6-6 6",
+  pin: "M12 21s-6-4.35-6-10a6 6 0 1 1 12 0c0 5.65-6 10-6 10Zm0-8a2 2 0 1 0 0-4a2 2 0 0 0 0 4Z",
+  filter: "M3 5h18M6 12h12M10 19h4",
+  grid: "M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z",
+  eye: "M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Zm10 3a3 3 0 1 0 0-6a3 3 0 0 0 0 6Z",
+  clock: "M12 6v6l4 2M12 22a10 10 0 1 0 0-20a10 10 0 0 0 0 20Z",
+  scale: "M12 3v18M5 7h14M7 7l-4 7h8L7 7Zm10 0-4 7h8l-4-7Z",
+  compass: "M12 22a10 10 0 1 0 0-20a10 10 0 0 0 0 20Zm4-14-6 2-2 6 6-2 2-6Z",
+  flag: "M5 21V4m0 0c3-2 6 2 9 0s6 2 9 0v9c-3 2-6-2-9 0s-6-2-9 0",
+  fileText: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h8M8 9h3",
+  messageSquare: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z",
+  layout: "M3 4h18v5H3zM3 13h7v7H3zM14 13h7v7h-7z",
+  badge: "M12 2l3 2 4-.5.5 4L22 11l-2 3 1.5 3.5-4 .5L12 22l-3-2-4 .5-.5-4L2 13l2-3-1.5-3.5 4-.5L12 2Z",
+};
+
+function Icon({ name, size = 18, stroke = 1.9, color = "currentColor", style = {} }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="none"
+      stroke={color}
+      strokeWidth={stroke}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      style={{ flex: "0 0 auto", ...style }}
+    >
+      <path d={ICON_PATHS[name]} />
+    </svg>
+  );
+}
+
+const palette = {
+  bg: "#F5EFE5",
+  bgSoft: "#FBF7F0",
+  paper: "#FFFDFC",
+  border: "#E2D7C8",
+  borderStrong: "#D2C1AA",
+  ink: "#1F2330",
+  sub: "#5B5F6B",
+  muted: "#7A7F89",
+  red: "#C8102E",
+  redDeep: "#A20E27",
+  redSoft: "#F9E2E6",
+  navy: "#2C3345",
+  gold: "#B9862F",
+  green: "#156B52",
+  greenSoft: "#E8F4EF",
+  amber: "#9A6700",
+  amberSoft: "#F9F1DB",
+  blueSoft: "#EAF0F7",
+  shadow: "0 8px 24px rgba(31, 35, 48, 0.08)",
+};
+
+const studyData = {
+  meta: {
+    moduleEN: "MODULE II: DESIGNING A PREDICTION FACTORY INTO YOUR OPERATING MODEL — FOUNDATIONS",
+    moduleZH: "模組二：將預測工廠設計入營運模式 — 基礎篇",
+    subtitleEN: "eHarmony & Predicting Love | Weak AI/ML & Building Algorithms",
+    subtitleZH: "eHarmony 與愛情預測｜弱 AI/ML 與演算法建構",
+    courseLine: "Prof. Kevin Boudreau | Northeastern University | HBS Case 9-709-424",
+  },
+  hero: {
+    takeawaysEN: [
+      "eHarmony is best read as a prediction-driven operating model, not just a dating website.",
+      "Its advantage comes from complementary choices: long questionnaire, selective admission, algorithmic matching, Guided Communication, premium pricing, and research investment.",
+      "The central strategic tension is scale versus model integrity.",
+    ],
+    takeawaysZH: [
+      "eHarmony 最值得用「預測驅動的營運模式」來理解，而不只是交友網站。",
+      "其優勢來自互補選擇的整套設計：長問卷、選擇性准入、演算法配對、引導式溝通、溢價定價與研究投資。",
+      "本案的核心策略張力，是規模擴張與模型完整性之間的取捨。",
+    ],
+  },
+  quickStats: [
+    {
+      icon: "users",
+      labelEN: "Questionnaires Completed",
+      labelZH: "完成問卷人數",
+      value: "14M+",
+      noteEN: "first seven years",
+      noteZH: "前七年",
+    },
+    {
+      icon: "badge",
+      labelEN: "Employees",
+      labelZH: "員工數",
+      value: "~230",
+      noteEN: "about half in customer service",
+      noteZH: "約半數在客服",
+    },
+    {
+      icon: "checkCircle",
+      labelEN: "Applicant Rejection Rate",
+      labelZH: "申請者拒絕率",
+      value: "~20%",
+      noteEN: "to protect fit and credibility",
+      noteZH: "為保護適配性與可信度",
+    },
+    {
+      icon: "heart",
+      labelEN: "Daily Marriages Claimed",
+      labelZH: "宣稱每日成婚數",
+      value: "236",
+      noteEN: "Harris study, 2007",
+      noteZH: "2007 Harris 研究",
+    },
+  ],
+  precisionChecks: [
+    {
+      level: "must-fix",
+      titleEN: "Cash-flow wording",
+      titleZH: "現金流表述",
+      bodyEN: "Case-safe wording: eHarmony broke even in 2002 and became cash-flow positive the following year.",
+      bodyZH: "最安全的寫法：eHarmony 於 2002 年損益兩平，並在隔年轉為正現金流。",
+    },
+    {
+      level: "must-fix",
+      titleEN: "Advertising economics",
+      titleZH: "廣告經濟性",
+      bodyEN: "Banner ads delivered visibility and click-through, but low conversion made them less efficient than paid search on customer acquisition.",
+      bodyZH: "橫幅廣告雖有曝光與點擊，但因轉換率低，在獲客效率上不如付費搜尋。",
+    },
+    {
+      level: "watch",
+      titleEN: "Algorithm claim",
+      titleZH: "演算法表述",
+      bodyEN: "Say the algorithm is the core of the advantage, not the entire advantage by itself. The operating model matters.",
+      bodyZH: "應說演算法是優勢核心，而不是全部優勢本身；整套營運模式同樣重要。",
+    },
+    {
+      level: "watch",
+      titleEN: "Platform label",
+      titleZH: "平台標籤",
+      bodyEN: "Safer phrasing: curated matching platform in a two-sided market, but analytically strongest as a prediction-driven operating model.",
+      bodyZH: "更穩的說法：它是雙邊市場中的策展式配對平台，但在分析上更適合視為預測驅動的營運模式。",
+    },
+  ],
+  timeline: [
+    {
+      year: "1998",
+      titleEN: "Founded",
+      titleZH: "創立",
+      bodyEN: "Neil Clark Warren and Greg Forgatch create eHarmony around long-term compatibility.",
+      bodyZH: "Neil Clark Warren 與 Greg Forgatch 以長期相容性為核心創立 eHarmony。",
+      icon: "flag",
+    },
+    {
+      year: "2000",
+      titleEN: "Launch",
+      titleZH: "上線",
+      bodyEN: "August launch with a structured compatibility questionnaire and algorithmic matching model.",
+      bodyZH: "2000 年 8 月上線，以結構化相容性問卷與演算法配對為核心。",
+      icon: "spark",
+    },
+    {
+      year: "2002–2003",
+      titleEN: "Financial Turn",
+      titleZH: "財務轉折",
+      bodyEN: "Break-even in 2002, cash-flow positive the following year.",
+      bodyZH: "2002 年損益兩平，隔年轉為正現金流。",
+      icon: "chartBar",
+    },
+    {
+      year: "2004",
+      titleEN: "Patent + Funding",
+      titleZH: "專利與投資",
+      bodyEN: "Matching-system patent secured; TCV and Sequoia invest.",
+      bodyZH: "取得配對系統專利；TCV 與 Sequoia 投資。",
+      icon: "badge",
+    },
+    {
+      year: "2007",
+      titleEN: "Strategic Inflection",
+      titleZH: "策略轉折",
+      bodyEN: "Competition intensifies from Chemistry, Match, free sites, and social networks.",
+      bodyZH: "Chemistry、Match、免費網站與社群網路使競爭大幅升溫。",
+      icon: "alertTriangle",
+    },
+  ],
+  studyMaps: [
+    {
+      titleEN: "How to read the case in class",
+      titleZH: "課堂上最好的讀法",
+      bulletsEN: [
+        "Start with the use case: serious, long-term relationship formation.",
+        "Identify the prediction: which two people are likely to form a satisfying, enduring relationship.",
+        "Then show how the operating model is built to protect that prediction.",
+        "Only after that move to platform structure, network effects, and strategic options.",
+      ],
+      bulletsZH: [
+        "先從 use case 開始：以認真、長期關係形成為核心。",
+        "再界定預測：哪兩個人較可能形成令人滿意且持久的關係。",
+        "接著說明整套營運模式如何被設計來保護這個預測。",
+        "最後再進入平台結構、網路效應與策略選項。",
+      ],
+      icon: "compass",
+    },
+    {
+      titleEN: "What the professor is likely to reward",
+      titleZH: "教授最可能買單的答法",
+      bulletsEN: [
+        "Clear distinction between fact, inference, and course lens.",
+        "Explanation of complementary choices rather than single-feature thinking.",
+        "Attention to trade-offs: quality vs. scale, control vs. user autonomy, rigor vs. speed.",
+        "Precise definitions of user, use case, and dimensions of value.",
+      ],
+      bulletsZH: [
+        "清楚區分 fact、inference 與 course lens。",
+        "強調互補選擇，而不是把優勢誤解成單一功能。",
+        "看見取捨：品質對規模、控制對使用者自主、嚴謹對速度。",
+        "先精準界定 user、use case 與 dimensions of value。",
+      ],
+      icon: "brain",
+    },
+  ],
+  flow: [
+    {
+      icon: "database",
+      titleEN: "Structured data intake",
+      titleZH: "結構化資料輸入",
+      bodyEN: "258–436 questions capture personality, values, interests, preferences, demographics, and optional photos.",
+      bodyZH: "258–436 題問卷收集性格、價值觀、興趣、偏好、人口資料與可選照片。",
+    },
+    {
+      icon: "spark",
+      titleEN: "Compatibility model",
+      titleZH: "相容性模型",
+      bodyEN: "A patented algorithm validated against married-couple data estimates long-term compatibility rather than instant attraction.",
+      bodyZH: "受專利保護且用已婚伴侶資料驗證的模型，估計的是長期相容性，而不是即時吸引力。",
+    },
+    {
+      icon: "target",
+      titleEN: "Controlled matching",
+      titleZH: "受控配對",
+      bodyEN: "Users do not browse freely. The system chooses who sees whom, protecting the logic of the prediction.",
+      bodyZH: "使用者不能自由瀏覽，系統決定誰看見誰，以保護預測邏輯。",
+    },
+    {
+      icon: "messageSquare",
+      titleEN: "Guided interaction",
+      titleZH: "引導式互動",
+      bodyEN: "Structured questions, must-haves, can’t-stands, and open-ended prompts stage the interaction path.",
+      bodyZH: "透過結構化問題、必備條件、不能接受項與開放題，分階段管理互動流程。",
+    },
+    {
+      icon: "gitBranch",
+      titleEN: "Feedback + refinement",
+      titleZH: "回饋與修正",
+      bodyEN: "Acceptance, closure, subscription, and research data feed ongoing learning, though the model still relies heavily on front-end profile data.",
+      bodyZH: "接受、關閉、訂閱與研究資料能回饋系統，但模型仍高度依賴前端檔案資料。",
+    },
+  ],
+  valueCurve: [
+    {
+      dimensionEN: "Match quality / compatibility",
+      dimensionZH: "配對品質／相容性",
+      eharmony: "Very High",
+      chemistry: "Moderate",
+      free: "Very Low",
+      social: "Low",
+    },
+    {
+      dimensionEN: "Pool size / variety",
+      dimensionZH: "候選池大小／多樣性",
+      eharmony: "Moderate",
+      chemistry: "High",
+      free: "Very High",
+      social: "Very High",
+    },
+    {
+      dimensionEN: "Safety / screening",
+      dimensionZH: "安全／篩選",
+      eharmony: "Very High",
+      chemistry: "Low–Moderate",
+      free: "Low",
+      social: "Moderate",
+    },
+    {
+      dimensionEN: "Ease / speed",
+      dimensionZH: "易用性／速度",
+      eharmony: "Low",
+      chemistry: "High",
+      free: "High",
+      social: "High",
+    },
+    {
+      dimensionEN: "Price affordability",
+      dimensionZH: "價格可負擔性",
+      eharmony: "Low",
+      chemistry: "Moderate",
+      free: "Very High",
+      social: "Very High",
+    },
+    {
+      dimensionEN: "Communication depth",
+      dimensionZH: "溝通深度",
+      eharmony: "High",
+      chemistry: "Moderate",
+      free: "Low",
+      social: "Low",
+    },
+  ],
+  optionMatrix: [
+    {
+      optionEN: "Option 1",
+      optionZH: "選項一",
+      titleEN: "Defend core through faster membership growth",
+      titleZH: "以更快會員成長防守核心",
+      fitEN: "Best short-term defensive move, but only if the company protects data quality, screening discipline, and model credibility.",
+      fitZH: "短期內最合理的防守動作，但前提是不能破壞資料品質、篩選紀律與模型可信度。",
+      riskEN: "Relaxing admission or shortening the questionnaire could damage the very prediction quality that differentiates eHarmony.",
+      riskZH: "若放寬准入或縮短問卷，可能反而傷害最有差異化的預測品質。",
+      tag: "Most Defensible",
+    },
+    {
+      optionEN: "Option 2",
+      optionZH: "選項二",
+      titleEN: "Broaden into casual or medium-term dating",
+      titleZH: "擴展到休閒或中期約會",
+      fitEN: "Large addressable market, but it changes the target prediction itself.",
+      fitZH: "雖然市場更大，但它直接改變了系統正在預測的對象。",
+      riskEN: "The current model was validated for long-term satisfaction, not medium-term relationship compatibility.",
+      riskZH: "現有模型驗證的是長期滿意婚姻，而非中期關係相容性。",
+      tag: "Model Drift Risk",
+    },
+    {
+      optionEN: "Option 3",
+      optionZH: "選項三",
+      titleEN: "Launch life-stage sites",
+      titleZH: "推出人生階段網站",
+      fitEN: "Leverages research capabilities and longitudinal insights rather than the core matching model.",
+      fitZH: "主要利用研究能力與縱向洞察，而非核心配對模型。",
+      riskEN: "Different revenue model, different capability set, and a real risk of distracting the firm from the core dating engine.",
+      riskZH: "需要不同的營收模式與能力結構，也可能分散對核心交友引擎的注意力。",
+      tag: "Adjacency",
+    },
+    {
+      optionEN: "Option 4",
+      optionZH: "選項四",
+      titleEN: "Expand internationally",
+      titleZH: "國際化擴張",
+      fitEN: "Can extend the data and matching flywheel geographically, but only if the model transfers across cultures.",
+      fitZH: "若模型能跨文化遷移，便可在地理上擴大資料與配對飛輪。",
+      riskEN: "The algorithm was validated on U.S. couples, so transferability is uncertain and re-validation is likely necessary.",
+      riskZH: "演算法是在美國伴侶資料上驗證的，跨文化可遷移性不確定，且大概率需要重新驗證。",
+      tag: "Second Move",
+    },
+  ],
+  exhibits: [
+    {
+      num: "1",
+      titleEN: "Marriage-event demographics",
+      titleZH: "婚姻事件人口統計",
+      noteEN: "Use for segmentation language.",
+      noteZH: "可用來支撐市場區隔分析。",
+    },
+    {
+      num: "4",
+      titleEN: "International marriage attitudes",
+      titleZH: "各國婚姻態度比較",
+      noteEN: "Critical for Option 4.",
+      noteZH: "評估選項四時最重要。",
+    },
+    {
+      num: "7",
+      titleEN: "How couples met",
+      titleZH: "伴侶如何相識",
+      noteEN: "Use to compare online vs. offline pathways.",
+      noteZH: "可拿來比較線上與線下途徑。",
+    },
+    {
+      num: "8",
+      titleEN: "eHarmony profile structure",
+      titleZH: "eHarmony 問卷結構",
+      noteEN: "Core data intake exhibit.",
+      noteZH: "核心資料輸入附錄。",
+    },
+    {
+      num: "9–10",
+      titleEN: "Pricing comparison",
+      titleZH: "定價比較",
+      noteEN: "Shows consistent premium positioning.",
+      noteZH: "顯示其持續採溢價定位。",
+    },
+    {
+      num: "12",
+      titleEN: "Chemistry test structure",
+      titleZH: "Chemistry 測試結構",
+      noteEN: "Useful for competitor comparison.",
+      noteZH: "可用於競爭者比較。",
+    },
+  ],
+  coldCalls: [
+    {
+      qEN: "What is eHarmony really selling?",
+      qZH: "eHarmony 真正在賣什麼？",
+      aEN: "It is selling higher-confidence compatibility judgment for people seeking serious relationships. The website, questionnaire, matching logic, and Guided Communication are all delivery mechanisms for that judgment.",
+      aZH: "它真正販售的是：對嚴肅關係尋求者而言，更高信心的相容性判斷。網站、問卷、配對邏輯與引導式溝通，都只是交付這個判斷的機制。",
+    },
+    {
+      qEN: "Is eHarmony a platform?",
+      qZH: "eHarmony 算是平台嗎？",
+      aEN: "It can be analyzed as a curated matching platform in a two-sided market. But for this module, the stronger analytical point is that it is a prediction-driven operating model rather than an open browse-and-search platform.",
+      aZH: "它可以被分析為雙邊市場中的策展式配對平台。但對本模組而言，更強的分析重點是：它是一套預測驅動的營運模式，而不是開放式瀏覽搜尋平台。",
+    },
+    {
+      qEN: "Where do the network effects come from?",
+      qZH: "它的網路效應從哪裡來？",
+      aEN: "There are traditional cross-side effects, but the more interesting effect is data-mediated: a richer serious-user pool gives the algorithm more high-quality candidates and can improve satisfaction and retention. That is an inference grounded in the case, not a direct quote from the case.",
+      aZH: "它當然有傳統跨邊效應，但更有意思的是資料中介效應：越豐富且越認真的使用者池，越能讓演算法選出高品質候選並提升滿意度與留存。這是基於個案的推論，不是個案原句。",
+    },
+    {
+      qEN: "What should Waldorf do?",
+      qZH: "Waldorf 應該怎麼做？",
+      aEN: "The safest recommendation is Option 1 first, but without degrading the prediction system. Defend the core serious-relationship franchise before attempting broader adjacency or geographic expansion.",
+      aZH: "最穩的建議是先做選項一，但不能破壞預測系統本身。應先守住認真關係這個核心市場，再考慮外圍延伸或地理擴張。",
+    },
+  ],
   sections: [
     {
-      id: "overview",
-      titleEN: "I. Case Overview & Context",
-      titleZH: "一、案例概覽與背景",
+      id: "session-thesis",
+      titleEN: "I. Session Thesis & Reading Logic",
+      titleZH: "一、課堂主軸與閱讀邏輯",
+      tag: "CLASS LENS",
+      tagZH: "課程視角",
+      icon: "compass",
+      summaryEN: "Read eHarmony as a narrow prediction engine embedded into a tightly controlled operating model.",
+      summaryZH: "應把 eHarmony 讀成一個嵌入嚴密營運模式中的狹義預測引擎。",
       subsections: [
         {
-          titleEN: "Case Setting",
-          titleZH: "案例情境",
-          contentEN: `**Date:** October 2007. CEO Greg Waldorf and President/COO Greg Steiner driving on I-10 Freeway after a day-long strategy meeting.
+          label: "class-lens",
+          titleEN: "Why this case belongs in Module II",
+          titleZH: "為什麼這個案例屬於模組二",
+          contentEN: `This session is not asking whether eHarmony uses technology in a broad, generic sense. The better question is whether the firm has built a prediction-driven operating model. In this module, prediction matters because AI and ML lower the cost of making judgments under uncertainty. eHarmony is an early, clean example: it gathers structured user data, uses an algorithm to estimate compatibility, and inserts that judgment directly into who is admitted, who gets matched, and how interaction proceeds.
 
-**Core Decision:** Which of four strategic options to pursue in response to intensifying competition from Match (Chemistry), Yahoo! Personals, free sites (Plenty of Fish, OKCupid), and social networks (MySpace, Facebook).
+The strongest class reading therefore starts with the use case, the prediction, and the operating model. Only after that should you discuss platform structure, network effects, and competitive positioning.`,
+          contentZH: `這堂課真正要問的，不是 eHarmony 有沒有使用科技，而是它是否建出一套以預測為核心的營運模式。在本模組裡，預測之所以重要，是因為 AI 與 ML 讓不確定情境下的判斷成本下降。eHarmony 是一個非常早期而且很乾淨的例子：它先蒐集結構化使用者資料，再用演算法估計相容性，最後把這個判斷直接嵌進誰能加入、誰會被配對、以及互動如何展開。
 
-**Company Snapshot (2007):**
-- Founded 1998 by Dr. Neil Clark Warren (clinical psychologist, 35 yrs experience) and son-in-law Greg Forgatch
-- Launched August 2000 with $3M seed from Fayez Sarofim & Company (Houston)
-- ~230 employees, approximately half in customer service
-- 14+ million people completed the Relationship Questionnaire in first 7 years
-- 236 eHarmony members married every day in the US (2007 Harris study) = 2% of all US marriages
-- 60% of users were women; people 45+ were fastest-growing segment
-- Charged roughly 2x competitors; premium pricing strategy
-- Profitable; cash-flow positive since 2002
-- Technology Crossover Ventures and Sequoia Capital invested (2004)`,
-          contentZH: `**時間：** 2007年10月。CEO Greg Waldorf 與總裁兼營運長 Greg Steiner 在 I-10 高速公路上，剛結束全天策略會議。
-
-**核心決策：** 面對 Match（Chemistry）、Yahoo! Personals、免費網站（Plenty of Fish、OKCupid）及社群網路（MySpace、Facebook）的激烈競爭，應選擇四個策略選項中的哪一個。
-
-**公司概況（2007年）：**
-- 1998年由 Dr. Neil Clark Warren（臨床心理學家，35年執業經驗）與女婿 Greg Forgatch 創立
-- 2000年8月上線，種子資金300萬美元來自休士頓 Fayez Sarofim & Company
-- 約230名員工，約半數從事客服
-- 創立前七年，超過1,400萬人完成「關係問卷」
-- 2007年 Harris 研究：平均每天236名 eHarmony 會員在美國結婚 = 全美婚姻的2%
-- 60%使用者為女性；45歲以上為成長最快族群
-- 收費約為競爭對手的兩倍；採取溢價定價策略
-- 公司獲利中；自2002年起現金流為正
-- Technology Crossover Ventures 與紅杉資本（Sequoia Capital）於2004年投資`
+因此，課堂上最強的讀法應先從 use case、prediction、operating model 開始，之後才談平台結構、網路效應與競爭定位。`,
         },
         {
-          titleEN: "Industry Context (Marriage & Personals Markets)",
-          titleZH: "產業背景（婚姻與交友市場）",
-          contentEN: `**Marriage Market Trends:**
-- Only 16% of US singles (~7% of adult population) actively looking for a partner
-- Marriage rate at historical low; median age rising (27 men / 26 women by 2004, vs. 26/22 in 1890)
-- Divorce peaked in 1981, declining since; 45% of marriages end in divorce, most in 4th year
-- Cohabitation rates rose from 2.9% to 4.7% (1995-2005)
-- Marriage shifted from "functional partnership" to seeking "love, sexual passion, or even close friendship" — spouses became more like "experience goods" than "search goods"
+          label: "class-lens",
+          titleEN: "One-sentence thesis",
+          titleZH: "一句話核心論點",
+          contentEN: `eHarmony is best understood as a curated matching system that automates a narrow judgment problem: given two structured profiles, how likely are these two people to form a satisfying, enduring relationship?
 
-**Online Personals Industry:**
-- First online personals: 1992; initial stigma very high
-- By 2005: 16 million people had visited a site at least once
-- Industry revenue ~$900M in 2007; expected to double by 2012
-- 37% of people looking for relationships had internet access but hadn't visited a personals site (growth room)
-- Repeat customer tendency: once subscribed, people tended to re-subscribe
-- Of 2.2 million marriages/year, reportedly 120,000 occurred between people who met on personals sites; insiders claimed nearly 1/5 of marriages were initiated online
-- 45% of personals users never married; 31% divorced/separated/widowed; 23% married
-- 40% entered long-term relationships via online personals
-- 40-50 year olds: fastest-growing online dating demographic`,
-          contentZH: `**婚姻市場趨勢：**
-- 僅16%的美國單身者（約成年人口的7%）正在積極尋找伴侶
-- 結婚率處於歷史最低點；結婚年齡中位數上升（2004年男性27歲／女性26歲，1890年為男性26歲／女性22歲）
-- 離婚率於1981年達到高峰後持續下降；45%的婚姻以離婚收場，多數在第四年
-- 同居比率從2.9%升至4.7%（1995-2005年）
-- 婚姻已從「功能性合夥」轉向追求「愛情、性吸引力、甚至親密友誼」——配偶從「搜尋財」變得更像「經驗財」
+That judgment is not left sitting inside analytics. It is embedded into the firm’s operating model through screening, matching, Guided Communication, and premium positioning.`,
+          contentZH: `eHarmony 最適合被理解成一套策展式配對系統，它自動化了一個狹義判斷問題：給定兩份結構化個人檔案，這兩個人形成令人滿意且長久關係的機率有多高？
 
-**線上交友產業：**
-- 第一個線上交友網站：1992年；初期社會汙名極高
-- 至2005年：1,600萬人至少造訪過一次
-- 2007年產業營收約9億美元；預計2012年翻倍
-- 37%尋找伴侶者有網路但尚未造訪交友網站（成長空間）
-- 回購傾向：一旦訂閱，使用者傾向續訂
-- 每年220萬樁婚姻中，據報12萬樁發生在透過交友網站認識的人之間；業內人士認為近五分之一的婚姻始於線上
-- 交友網站使用者：45%未婚；31%離婚／分居／喪偶；23%已婚
-- 40%透過線上交友進入長期關係
-- 40-50歲：線上交友成長最快的族群`
-        }
-      ]
+而這個判斷不是停留在分析層，而是透過篩選、配對、引導式溝通與溢價定位，被真正嵌進公司的營運模式。`,
+        },
+      ],
+    },
+    {
+      id: "overview",
+      titleEN: "II. Case Overview & Industry Context",
+      titleZH: "二、案例概覽與產業背景",
+      icon: "bookOpen",
+      summaryEN: "The case takes place in October 2007, when eHarmony faces intensified rivalry from Match, Chemistry, free sites, and social networks.",
+      summaryZH: "案例時間點為 2007 年 10 月，eHarmony 正面臨來自 Match、Chemistry、免費網站與社群網路的升溫競爭。",
+      subsections: [
+        {
+          label: "fact",
+          titleEN: "Case setting",
+          titleZH: "案例情境",
+          contentEN: `Date: October 2007. CEO Greg Waldorf and President/COO Greg Steiner leave a day-long strategy meeting and must determine how eHarmony should respond to intensifying competition.
+
+Company snapshot:
+- Founded in 1998 by Dr. Neil Clark Warren and Greg Forgatch
+- Launched in August 2000 with $3 million of seed funding from Fayez Sarofim & Company
+- About 230 employees, with roughly half in customer service
+- More than 14 million people completed the Relationship Questionnaire in the first seven years
+- The firm broke even in 2002 and became cash-flow positive the following year
+- Women represented about 60% of the user base, and the 45+ segment was growing quickly
+- eHarmony priced at roughly twice many competitors and maintained a premium positioning
+- Technology Crossover Ventures and Sequoia Capital invested in 2004`,
+          contentZH: `時間：2007 年 10 月。CEO Greg Waldorf 與總裁兼營運長 Greg Steiner 結束全天策略會議後，必須決定 eHarmony 要如何回應持續升高的競爭。
+
+公司概況：
+- 1998 年由 Dr. Neil Clark Warren 與 Greg Forgatch 創立
+- 2000 年 8 月上線，種子資金為 Fayez Sarofim & Company 提供的 300 萬美元
+- 約有 230 名員工，其中大約一半在客服部門
+- 前七年有超過 1,400 萬人完成 Relationship Questionnaire
+- 公司於 2002 年損益兩平，並在隔年轉為正現金流
+- 女性約佔使用者的 60%，45 歲以上族群成長迅速
+- eHarmony 定價約為許多競爭者的兩倍，維持溢價定位
+- Technology Crossover Ventures 與 Sequoia Capital 於 2004 年投資`,
+        },
+        {
+          label: "fact",
+          titleEN: "Industry context",
+          titleZH: "產業背景",
+          contentEN: `Marriage and relationship formation were changing in the United States. Marriage rates had fallen, median marriage age had risen, cohabitation had increased, and the meaning of marriage had shifted from a functional arrangement toward a more emotionally loaded and experience-oriented ideal.
+
+In online personals, stigma had fallen materially by the mid-2000s. Industry revenues were substantial and projected to grow further. Yet the market was fragmented: paid subscription incumbents, fast-growing free sites, and social networks all competed for attention in different ways.`,
+          contentZH: `美國的婚姻與關係形成模式正在改變。結婚率下降、結婚年齡中位數上升、同居增加，而婚姻本身也從功能性安排，逐漸轉向更強調情感與體驗的理想。
+
+到 2000 年代中期，線上交友的社會汙名已顯著下降。產業營收規模可觀，且仍被預期會繼續成長。但市場結構十分分散：付費訂閱型業者、快速成長的免費網站、以及社群網路都以不同方式競爭使用者注意力。`,
+        },
+        {
+          label: "fact",
+          titleEN: "Competitive pressure points",
+          titleZH: "競爭壓力來源",
+          contentEN: `The four immediate threats were:
+- Match’s scale and marketing spend
+- Chemistry’s attempt to attack the same serious-relationship segment with a matching logic of its own
+- Free sites such as Plenty of Fish and OKCupid lowering willingness to pay
+- Social networks such as MySpace and Facebook creating alternative online ways to meet people`,
+          contentZH: `眼前最直接的四個威脅是：
+- Match 的規模與行銷預算
+- Chemistry 以自身的配對邏輯切入同一個 serious-relationship 市場
+- Plenty of Fish、OKCupid 等免費網站壓低使用者的付費意願
+- MySpace、Facebook 等社群網路提供另一種線上認識人的方式`,
+        },
+      ],
     },
     {
       id: "data",
-      titleEN: "II. COMPLETE INVENTORY: Every Data / Data Source eHarmony Has Access To",
-      titleZH: "二、完整盤點：eHarmony 可取得的所有資料與資料來源",
+      titleEN: "III. Full Data / Data-Source Inventory",
+      titleZH: "三、完整資料與資料來源盤點",
       tag: "CLASS PREP REQUIREMENT",
       tagZH: "課堂準備要求",
+      icon: "database",
+      summaryEN: "This is the most important factual preparation item for class: enumerate what data eHarmony can access, not just what it says in marketing.",
+      summaryZH: "這是課堂準備中最重要的事實題：要能列出 eHarmony 能接觸到哪些資料，而不只是它對外宣稱什麼。",
       subsections: [
         {
-          titleEN: "A. Personality Profile / Relationship Questionnaire Data",
-          titleZH: "A. 個性檔案／關係問卷資料",
-          contentEN: `**The core data asset.** Initially 436 questions, pared to 258 (later abbreviated to ~250). Covers 29 basic measures of compatibility across three primary constructs: personality, values, and interests.
+          label: "fact",
+          titleEN: "A. Questionnaire and profile data",
+          titleZH: "A. 問卷與個人檔案資料",
+          contentEN: `The Personality Profile / Relationship Questionnaire is the core data asset. It began at 436 questions and was later pared to 258. It covered approximately 29 compatibility measures organized around personality, values, and interests.
 
-Specific data fields collected:
-1. **Personal lifestyle preferences** — daily habits, routines
-2. **Communication style** — how individuals express themselves
-3. **Values** — moral, ethical, and life-priority frameworks
-4. **Beliefs** — religious, spiritual, philosophical orientations
-5. **Attitudes** — disposition toward various life situations
-6. **Personality background** — family background, upbringing
-7. **Birth order** — position among siblings
-8. **Energy level** — activity and vitality self-assessment
-9. **Intelligence** — self-reported cognitive engagement
-10. **Spirituality** — depth and nature of spiritual life
-11. **Special interests** — hobbies, passions, pursuits
-12. **Future aspirations** — life goals and plans
-13. **Self-descriptions** — traits like "agreeable," "spiritual," "cold," "quarrelsome," "attractive," "liberal"
-14. **Information-seeking behavior** — social occasions preferences
-15. **Emotional self-assessment** — feelings like "Happy," "Fearful about future," "Misunderstood," "Fortunate"
-16. **Partner preference characteristics** — energy level, communication ability
-17. **Personality traits** — via multiple-choice and scale-rated items
-18. **Personal interests inventory** — "board games," "church involvement," "movies," "shopping"
-19. **Living skills self-assessment** — practical life capabilities
-20. **Matching preferences** — smoking tolerance, relocation willingness, ideal match distance
-21. **Height, ethnicity, religion, number of marriages, number of children, home region**
-22. **Photos** — optional upload; 80% of paying subscribers had photos posted`,
-          contentZH: `**核心資料資產。** 最初436題，精簡為258題（後縮短至約250題）。涵蓋29項基本相容性指標，橫跨三大主要構面：性格、價值觀與興趣。
+Examples of data captured:
+1. Lifestyle and routines
+2. Communication style
+3. Values and beliefs
+4. Attitudes toward life situations
+5. Family background and upbringing
+6. Birth order
+7. Energy level and emotional stability markers
+8. Self-described intelligence and spirituality
+9. Special interests and hobbies
+10. Future aspirations and life goals
+11. Self-descriptions such as agreeable, quarrelsome, spiritual, attractive, or liberal
+12. Emotional self-assessments such as happy, fearful, fortunate, or misunderstood
+13. Desired partner traits such as communication ability and energy level
+14. Smoking tolerance, relocation willingness, and distance preferences
+15. Demographics such as height, ethnicity, religion, number of marriages, number of children, and home region
+16. Optional photo uploads`,
+          contentZH: `Personality Profile / Relationship Questionnaire 是公司的核心資料資產。最初為 436 題，之後縮減為 258 題，涵蓋約 29 個相容性面向，主要圍繞 personality、values、interests 三大構面。
 
-具體蒐集的資料欄位：
-1. **個人生活方式偏好** — 日常習慣、作息
-2. **溝通風格** — 個人表達方式
-3. **價值觀** — 道德、倫理與人生優先順序框架
-4. **信仰** — 宗教、靈性、哲學取向
-5. **態度** — 面對各種生活情境的傾向
-6. **個性背景** — 家庭背景、成長環境
-7. **排行** — 在兄弟姊妹中的位置
-8. **精力水平** — 活動力與活力自我評估
-9. **智力** — 自我報告的認知參與程度
-10. **靈性** — 精神生活的深度與性質
-11. **特殊興趣** — 嗜好、熱情、追求
-12. **未來抱負** — 人生目標與計畫
-13. **自我描述** — 如「隨和」、「具靈性」、「冷淡」、「好爭辯」、「有吸引力」、「自由派」
-14. **資訊尋求行為** — 社交場合偏好
-15. **情緒自我評估** — 如「快樂」、「對未來恐懼」、「被誤解」、「幸運」
-16. **伴侶偏好特質** — 精力水平、溝通能力
-17. **人格特質** — 透過多選題與量表評分
-18. **個人興趣清單** — 「桌遊」、「教會參與」、「電影」、「購物」
-19. **生活技能自評** — 實際生活能力
-20. **配對偏好** — 吸菸容忍度、搬遷意願、理想配對距離
-21. **身高、種族、宗教、婚姻次數、子女數、居住地區**
-22. **照片** — 選擇性上傳；80%的付費會員已上傳照片`
+具體蒐集的資料包括：
+1. 生活方式與日常作息
+2. 溝通風格
+3. 價值觀與信念
+4. 對不同生活情境的態度
+5. 家庭背景與成長環境
+6. 出生序
+7. 精力水平與情緒穩定相關指標
+8. 自我描述的智力與靈性
+9. 特殊興趣與嗜好
+10. 未來抱負與人生目標
+11. 自我描述詞，例如隨和、好爭辯、有靈性、有吸引力、自由派
+12. 情緒自評，例如快樂、恐懼、幸運、被誤解
+13. 希望伴侶具備的特質，例如溝通能力與精力水平
+14. 對抽菸、搬遷、配對距離的偏好
+15. 身高、族裔、宗教、婚姻次數、子女數、居住地區等人口資料
+16. 可選擇上傳的照片`,
         },
         {
-          titleEN: "B. Matching Algorithm & Outcome Data",
-          titleZH: "B. 配對演算法與結果資料",
-          contentEN: `1. **Algorithm validation dataset** — 4,000+ couples studied between 2000-2004; algorithm tested against Dyadic Adjustment Scale (long-term relationship happiness measure)
-2. **Match acceptance/rejection data** — whether each party chose to pursue or "close" a match
-3. **Match quality signals** — subscription driven by how much users like their matches; re-subscription rates correlated with number of hypothetical pairings available
-4. **Screening/rejection data** — the company declined to sell memberships to ~20% of applicants (already married, underage, divorced 3+ times); estimated $10M/year in foregone revenue; over 1 million total people rejected since inception
-5. **Patent on matching system** — secured May 2004
-6. **Couples research data** — studies of married couples to validate that algorithm-predicted matches were happier than couples who met elsewhere`,
-          contentZH: `1. **演算法驗證資料集** — 2000至2004年間研究4,000對以上伴侶；以「雙方適應量表」（衡量長期關係幸福感）測試演算法
-2. **配對接受／拒絕資料** — 雙方是否選擇追求或「關閉」配對
-3. **配對品質訊號** — 訂閱受使用者對配對滿意度驅動；續訂率與可用假設配對數量相關
-4. **篩選／拒絕資料** — 公司拒絕向約20%的申請者銷售會籍（已婚、未成年、離婚三次以上）；估計每年放棄1,000萬美元收入；創立以來累計拒絕超過100萬人
-5. **配對系統專利** — 2004年5月取得
-6. **伴侶研究資料** — 對已婚伴侶的研究，驗證演算法預測的配對比透過其他方式認識的伴侶更幸福`
+          label: "fact",
+          titleEN: "B. Screening and admission data",
+          titleZH: "B. 篩選與准入資料",
+          contentEN: `eHarmony did not sell memberships to everyone. It screened and rejected approximately 20% of applicants, commonly because the applicant was already married, underage, or divorced too many times. This created an additional class of data: eligibility, exclusion reasons, and the boundaries of the user pool the firm believed its model could serve credibly.
+
+This matters because the company was explicitly willing to sacrifice revenue in order to preserve fit and model credibility.`,
+          contentZH: `eHarmony 並不把會員資格賣給所有人。它會篩選並拒絕約 20% 的申請者，常見原因包括申請者已婚、未成年，或離婚次數過多。這使公司額外掌握一類重要資料：資格審查、排除原因，以及公司認為其模型能夠可信服務的使用者邊界。
+
+這一點重要，因為公司明確願意犧牲部分收入，以換取更好的適配性與模型可信度。`,
         },
         {
-          titleEN: "C. Guided Communication Behavioral Data",
-          titleZH: "C. 引導式溝通行為資料",
-          contentEN: `1. **Stage 1 — Easy-to-answer questions:** Each member chose 5 questions from eHarmony's list and sent to match (e.g., "If you were taken by your date to a party where you knew no one, how would you respond?") with multiple-choice answers
-2. **Stage 2 — "Must haves" and "Can't stands":** Personal list exchanges revealing dealbreakers and non-negotiables
-3. **Stage 3 — Open-ended questions:** Three deep questions exchanged (e.g., "What person in your life has been most inspirational, and why?")
-4. **Open Communication data:** Email exchanges, photo sharing, meeting arrangement discussions
-5. **Fast Track usage data** — 10% of members used Fast Track (bypassing Guided Communication); tripled after letting users state preferred communication method; men requested it more
-6. **Match closure data** — 20-30% of matches ended up in Open Communication; either party could "close" at any point
-7. **Message read-receipt data** — eHarmony was considering adding read-receipt feature to address paying subscribers' frustration with non-responsive matches`,
-          contentZH: `1. **第一階段 — 簡易回答問題：** 每位會員從 eHarmony 提供的清單中選擇5個問題發送給配對對象（如「假如約會對象帶你參加一個你不認識任何人的聚會，你會如何回應？」），附多選答案
-2. **第二階段 — 「必備條件」與「無法忍受」：** 交換個人清單，揭示底線與不可妥協事項
-3. **第三階段 — 開放式問題：** 交換三個深度問題（如「你生命中最具啟發性的人是誰？為什麼？」）
-4. **開放溝通資料：** 電子郵件交流、照片分享、見面安排討論
-5. **快速通道使用資料** — 10%的會員使用快速通道（跳過引導式溝通）；允許使用者選擇偏好的溝通方式後增加三倍；男性較常請求
-6. **配對關閉資料** — 20-30%的配對最終進入開放溝通；任一方可隨時「關閉」
-7. **訊息已讀回執資料** — eHarmony 正考慮新增已讀回執功能，以解決付費會員對未回應配對的不滿`
+          label: "fact",
+          titleEN: "C. Matching and interaction data",
+          titleZH: "C. 配對與互動資料",
+          contentEN: `Once a user entered the system, eHarmony could observe:
+- Which matches were shown
+- Whether a match was accepted or closed
+- Which Guided Communication questions were selected
+- Multiple-choice responses in early-stage interaction
+- Must-haves and can’t-stands exchanged by each side
+- Open-ended question responses
+- Whether the pair entered Open Communication
+- Whether photos were exchanged
+- Whether Fast Track was used
+- Communication preference information
+- Where in the funnel interaction stopped`,
+          contentZH: `使用者一旦進入系統，eHarmony 便能觀察：
+- 系統顯示了哪些配對
+- 配對是被接受還是被關閉
+- 選了哪些 Guided Communication 問題
+- 初期互動中的多選題回答
+- 雙方交換的 must-haves 與 can’t-stands
+- 開放式問題的回答
+- 是否進入 Open Communication
+- 是否交換照片
+- 是否使用 Fast Track
+- 偏好的溝通方式
+- 互動在漏斗中的哪個階段停止`,
         },
         {
-          titleEN: "D. User Behavioral & Engagement Data",
-          titleZH: "D. 使用者行為與參與度資料",
-          contentEN: `1. **Registration vs. completion funnel data** — men less likely to complete questionnaire once started
-2. **Conversion rates** — eHarmony converted active-to-paying members 3x industry average
-3. **Subscription/renewal patterns** — pricing tiers from 1-month to 12-month; re-subscription rates as function of match availability
-4. **Paying vs. non-paying member interaction data** — non-paying members could still be matched and initiate interactions, creating conversion opportunities but also friction
-5. **Time-to-marriage data** — successful subscriber took 4-6 months on average to be matched with eventual spouse
-6. **Geographic distribution data** — members distributed well across US with slight skew toward less populous areas
-7. **Demographic data** — age, gender ratios (60% women), visit patterns (women generated 2/3 of visits)
-8. **Member satisfaction data** — Harris Interactive study (Aug 2004-Aug 2005): 90 members married daily; follow-up (2007): 236 daily`,
-          contentZH: `1. **註冊與完成漏斗資料** — 男性一旦開始填寫問卷，完成的可能性較低
-2. **轉換率** — eHarmony 將活躍會員轉為付費會員的比率為業界平均的三倍
-3. **訂閱／續訂模式** — 定價從1個月到12個月不等；續訂率為配對可用數量的函數
-4. **付費與非付費會員互動資料** — 非付費會員仍可被配對並發起互動，創造轉換機會但也產生摩擦
-5. **成婚時間資料** — 成功的訂閱者平均需要4-6個月才能與最終配偶配對
-6. **地理分佈資料** — 會員在全美分佈良好，略偏向人口較少地區
-7. **人口統計資料** — 年齡、性別比（60%女性）、造訪模式（女性產生三分之二的造訪量）
-8. **會員滿意度資料** — Harris Interactive 研究（2004年8月-2005年8月）：每天90位會員結婚；後續追蹤（2007年）：每天236位`
+          label: "fact",
+          titleEN: "D. Behavioral, engagement, and monetization data",
+          titleZH: "D. 行為、參與與變現資料",
+          contentEN: `The platform also had access to:
+- Registration-start versus questionnaire-completion data
+- Conversion rates from active to paying members
+- Subscription choice across pricing tiers
+- Renewal and re-subscription behavior
+- Time-to-outcome data such as how long it took successful users to reach eventual spouses
+- Gendered usage patterns such as women generating a disproportionate share of visits
+- Geographic distribution of members
+- Friction points involving paying users matched with non-paying users
+- The relationship between match availability and re-subscription`,
+          contentZH: `平台也能取得：
+- 註冊開始與問卷完成之間的漏斗資料
+- 活躍使用者轉為付費會員的轉換率
+- 不同方案的訂閱選擇
+- 續訂與再訂閱行為
+- 結果時間資料，例如成功使用者平均多久遇到最終配偶
+- 帶有性別差異的使用模式，例如女性帶來更多造訪量
+- 會員的地理分布
+- 付費會員與非付費會員配對所產生的摩擦
+- 配對可得性與再訂閱之間的關係`,
         },
         {
-          titleEN: "E. Marketing & Acquisition Data",
-          titleZH: "E. 行銷與獲客資料",
-          contentEN: `1. **Advertising spend data** — up to $80M/year; 3/4 on TV and radio, remainder on paid internet search and banner ads
-2. **Channel performance data** — banner ads: high visibility, decent click-through, low conversion; paid search: more expensive per acquisition
-3. **Campaign A/B test data** — tested "problem-first" ads (lonely individuals) vs. "benefit-first" ads (happy couples); problem-first increased anxiety and reduced response rates
-4. **Testimonial/success story data** — featured real couples in documentary-style ads
-5. **Media buying efficiency data** — worked with direct-response-focused agencies; bought remnant inventory at discount; avoided broadcast TV (expensive); used national cable only
-6. **Customer acquisition cost data** — profitability depended on efficient acquisition; Match's spend increase from $80M to $145M tracked against eHarmony's percentage of sales`,
-          contentZH: `1. **廣告支出資料** — 每年高達8,000萬美元；四分之三用於電視和廣播，其餘用於付費網路搜尋和橫幅廣告
-2. **管道績效資料** — 橫幅廣告：高曝光、尚可點擊率、低轉換率；付費搜尋：每次獲客成本更高
-3. **廣告 A/B 測試資料** — 測試「問題先行」廣告（孤獨個體）vs.「效益先行」廣告（幸福伴侶）；問題先行增加焦慮、降低回應率
-4. **見證／成功故事資料** — 以真實伴侶拍攝紀錄片風格廣告
-5. **媒體購買效率資料** — 與專注直效行銷的代理商合作；購買尾盤庫存以取得折扣；避免無線電視（昂貴）；僅使用全國有線電視
-6. **客戶獲取成本資料** — 獲利能力取決於獲客效率；Match 廣告支出從8,000萬增至1.45億美元，與 eHarmony 的銷售百分比追蹤比較`
+          label: "fact",
+          titleEN: "E. Research, validation, and experimental data",
+          titleZH: "E. 研究、驗證與實驗資料",
+          contentEN: `Research assets went well beyond platform logs:
+- More than 2,000 couples surveyed before launch to build the measurement instrument
+- More than 4,000 couples used for algorithm validation between 2000 and 2004
+- Validation against the Dyadic Adjustment Scale as a proxy for long-term relationship success
+- eHarmony Labs observation and longitudinal research after launch
+- Research on physical attraction, speed dating, offline disappointment, and post-marriage transitions
+- A five-year study following 400 couples through engagement, marriage, pregnancy, and childbirth`,
+          contentZH: `研究資產遠不只是平台操作紀錄：
+- 上線前調查超過 2,000 對伴侶，用以建立測量工具
+- 2000 至 2004 年間使用超過 4,000 對伴侶驗證演算法
+- 以 Dyadic Adjustment Scale 作為長期關係成功的代理指標
+- 上線後的 eHarmony Labs 觀察研究與縱向研究
+- 關於外貌吸引力、快速約會、線下面對面落差，以及婚後轉換的研究
+- 一項為期五年、追蹤 400 對伴侶從訂婚、結婚到懷孕與生子的研究`,
         },
         {
-          titleEN: "F. R&D and Labs Data",
-          titleZH: "F. 研發與實驗室資料",
-          contentEN: `1. **eHarmony Labs data (opened 2007)** — 5 research scientists; 2,000 sq ft clinical space with observation rooms; studying biological, sociological, and neurological underpinnings of love
-2. **Physical attraction research** — Buckwalter: "physical attraction plays a large role in the initial meeting but is a very poor predictor of long-term success"
-3. **Five-year longitudinal study** — 400 couples tracked through engagement, marriage, pregnancy, childbirth; early finding: "the biggest adjustment of every marriage is the birth of the first child"
-4. **Speed-dating and offline meeting research** — researchers found online daters "ended up going out with fewer than 1% of the people whose profiles they studied" and dates often resulted in "huge letdowns"
-5. **Married couples compatibility research** — 2,000 couples surveyed before website launch to develop the instrument; algorithm predicted top-quartile Dyadic Adjustment Scale scores`,
-          contentZH: `1. **eHarmony Labs 資料（2007年成立）** — 5位研究科學家；2,000平方呎臨床空間含觀察室；研究愛情的生物學、社會學與神經學基礎
-2. **外貌吸引力研究** — Buckwalter：「外貌吸引力在初次見面時扮演重要角色，但對預測長期成功極為薄弱」
-3. **五年縱貫研究** — 追蹤400對伴侶的訂婚、結婚、懷孕、生子過程；初步發現：「每段婚姻最大的調適是第一個孩子的出生」
-4. **快速約會與線下見面研究** — 研究者發現線上約會者「最終只與他們查看過的個人檔案中不到1%的人約會」，且約會經常帶來「巨大的失望」
-5. **已婚伴侶相容性研究** — 網站上線前調查2,000對伴侶以開發測量工具；演算法預測了「雙方適應量表」前四分之一的分數`
+          label: "fact",
+          titleEN: "F. Marketing, acquisition, and competitive data",
+          titleZH: "F. 行銷、獲客與競爭資料",
+          contentEN: `eHarmony also had meaningful commercial data:
+- Advertising spend by channel, with heavy use of radio and TV
+- Visibility, click-through, and conversion patterns across banners and paid search
+- Response differences across creative approaches such as lonely-problem framing versus happy-couple framing
+- Testimonial performance from documentary-style success-story advertising
+- Media buying efficiency and remnant inventory economics
+- Competitor pricing, traffic, feature design, and positioning across Match, Chemistry, Yahoo! Personals, and free sites`,
+          contentZH: `eHarmony 也掌握大量商業資料：
+- 各管道的廣告支出，尤其大量使用廣播與電視
+- 橫幅廣告與付費搜尋的曝光、點擊與轉換模式
+- 不同廣告創意的反應差異，例如孤獨問題框架與幸福伴侶框架
+- 紀錄片式成功故事廣告的表現
+- 媒體採買效率與尾盤庫存經濟性
+- Match、Chemistry、Yahoo! Personals 與免費網站的定價、流量、功能與定位資料`,
         },
         {
-          titleEN: "G. Competitive Intelligence & Market Data",
-          titleZH: "G. 競爭情報與市場資料",
-          contentEN: `1. **Competitor pricing data** — detailed tracking across Match, Chemistry, Yahoo! Personals (Exhibits 9, 10)
-2. **Market share and traffic data** — Match: 1.3M paying customers; Chemistry: 2M registered; Yahoo! Personals: 7M unique visitors (5% of dating visits); Plenty of Fish: half eHarmony visitors but 20% more visits
-3. **Industry revenue benchmarks** — $900M total industry (2007); Match revenues ~$349M projected; average revenue/customer for Yahoo! Personals: $16/month
-4. **Competitor feature comparison data** — Chemistry's personality test (fewer questions, different methodology: interpersonal chemistry vs. psychosocial compatibility), Match's Dr. Phil campaign results
-5. **Social network threat data** — Jupiter Research saw "no signs that the eruption of social networks has burned the paid online personals market"; only ~5% of people meeting online met through social network sites`,
-          contentZH: `1. **競爭對手定價資料** — 詳細追蹤 Match、Chemistry、Yahoo! Personals 的定價（見附錄9、10）
-2. **市場佔有率與流量資料** — Match：130萬付費客戶；Chemistry：200萬註冊用戶；Yahoo! Personals：700萬不重複訪客（交友網站造訪量的5%）；Plenty of Fish：訪客數為 eHarmony 的一半，但造訪次數多20%
-3. **產業營收基準** — 2007年全產業共9億美元；Match 預估營收約3.49億美元；Yahoo! Personals 每位客戶平均月營收16美元
-4. **競爭對手功能比較資料** — Chemistry 的個性測試（題目較少、方法論不同：人際化學 vs. 心理社會相容性）、Match 的 Dr. Phil 行銷活動成效
-5. **社群網路威脅資料** — Jupiter Research 認為「沒有跡象顯示社群網路的爆發已燒毀付費線上交友市場」；僅約5%的線上認識者是透過社群網站`
+          label: "inference",
+          titleEN: "G. Derived or model-generated data",
+          titleZH: "G. 衍生或模型生成資料",
+          contentEN: `The case clearly supports the existence of derived outputs, even when it does not always list them as standalone data categories. These include compatibility scores, match rankings, estimates of likely relationship success, expected pool depth for a given user, and the practical likelihood that a user will renew or churn.
+
+These are not raw inputs. They are algorithmic products built from the underlying data asset.`,
+          contentZH: `即使個案沒有把它們一一列成獨立資料類別，從內容仍可清楚推導出一批衍生輸出，例如相容性分數、配對排序、關係成功機率估計、某位使用者可得候選池深度，以及續訂或流失的可能性。
+
+它們不是原始輸入，而是建立在底層資料資產之上的演算法產出。`,
         },
-        {
-          titleEN: "H. Operational & Financial Data",
-          titleZH: "H. 營運與財務資料",
-          contentEN: `1. **Subscription tier revenue data** — 1-month ($59.95), 3-month ($39.95/mo), 6-month ($29.95/mo), 12-month ($19.95/mo) as of 2008
-2. **Customer lifetime value data** — implicit in re-subscription modeling based on match quality
-3. **Rejection cost tracking** — $10M/year estimated foregone revenue from screening out applicants
-4. **Employee allocation data** — ~115 of 230 employees in customer service
-5. **Harris Interactive commissioned studies** — externally validated marriage outcome data`,
-          contentZH: `1. **訂閱方案營收資料** — 1個月（$59.95）、3個月（$39.95/月）、6個月（$29.95/月）、12個月（$19.95/月），截至2008年
-2. **客戶終身價值資料** — 隱含於基於配對品質的續訂模型中
-3. **拒絕成本追蹤** — 篩選申請者導致的預估放棄收入為每年1,000萬美元
-4. **員工配置資料** — 230名員工中約115名從事客服
-5. **Harris Interactive 委託研究** — 外部驗證的婚姻結果資料`
-        }
-      ]
+      ],
     },
     {
       id: "platform",
-      titleEN: "III. Platform & Operating Model Analysis (Course Framework Lens)",
-      titleZH: "三、平台與營運模式分析（課程框架視角）",
+      titleEN: "IV. Platform, User, Use Case, and Value Logic",
+      titleZH: "四、平台、使用者、Use Case 與價值邏輯",
+      tag: "CLASS LENS",
+      tagZH: "課程視角",
+      icon: "layers",
+      summaryEN: "This is where Boudreau’s framework matters most: define the user, the use case, the dimensions of value, and the alternative solutions in the market.",
+      summaryZH: "這一節最需要套用 Boudreau 的框架：先定義 user、use case、dimensions of value，以及市場中的替代方案。",
       subsections: [
         {
-          titleEN: "A. Is eHarmony a Platform? Multi-Sided Market Analysis",
-          titleZH: "A. eHarmony 是平台嗎？多邊市場分析",
-          contentEN: `**[CLASS LENS]** eHarmony operates as a **matching platform** in a two-sided market: men seeking women and women seeking men (heterosexual matching). However, its operating model is fundamentally different from typical "Do-It-Yourself" dating platforms.
+          label: "class-lens",
+          titleEN: "Who is the user?",
+          titleZH: "誰是使用者？",
+          contentEN: `The focal user is not “anyone dating online.” The better-defined user is a person seeking a serious, potentially marriage-oriented relationship and willing to spend time, disclose personal information, and pay for a process that promises higher-quality matching.
 
-**Sides of the Platform:**
-- **Side 1: Female users** (60% of user base; generate 2/3 of visits)
-- **Side 2: Male users** (40% of user base; less likely to complete questionnaire; more likely to request Fast Track)
-- **Potential Side 3 (not pursued):** Same-sex users (excluded citing limited resources and small market size)
-- **Potential Side 4 (Option 3):** Advertisers (if free life-stage sites launched)
+Important nuance: the buyer, user, and value recipient are often the same individual here. That simplifies one part of the platform analysis.`,
+          contentZH: `焦點使用者不是「任何會線上交友的人」。更精準的定義是：尋找認真、可能以婚姻為導向的關係，且願意投入時間、揭露個人資訊並付費，來換取更高品質配對流程的人。
 
-**Critical distinction from open platforms:** eHarmony is not a browsing/search platform. It is a **curated matching platform** where the algorithm, not the user, determines who sees whom. Users cannot browse profiles independently. This is a fundamentally different operating model from Match, Yahoo! Personals, or any DIY site.
-
-**[INFERENCE]** This positions eHarmony closer to a "prediction factory" model than a pure platform-mediation model. The platform's core value proposition IS the prediction — the algorithm's judgment about compatibility.`,
-          contentZH: `**[課程視角]** eHarmony 作為一個**配對平台**運作於雙邊市場中：尋找女性的男性與尋找男性的女性（異性配對）。然而，其營運模式與典型的「自助式」交友平台有本質上的不同。
-
-**平台各邊：**
-- **第一邊：女性使用者**（佔使用者基礎的60%；產生三分之二的造訪量）
-- **第二邊：男性使用者**（佔使用者基礎的40%；完成問卷的可能性較低；較常要求快速通道）
-- **潛在第三邊（未推行）：** 同性使用者（以資源有限及市場規模小為由排除）
-- **潛在第四邊（選項三）：** 廣告主（若推出免費人生階段網站）
-
-**與開放平台的關鍵區別：** eHarmony 不是瀏覽／搜尋平台。它是一個**策展式配對平台**，由演算法而非使用者決定誰能看到誰。使用者無法獨立瀏覽個人檔案。這與 Match、Yahoo! Personals 或任何自助式網站的營運模式截然不同。
-
-**[推論]** 這使 eHarmony 更接近「預測工廠」模式，而非純粹的平台中介模式。平台的核心價值主張正是預測本身——演算法對相容性的判斷。`
+重要細節是：在這個案例中，buyer、user、value recipient 往往是同一個人，這使平台分析中的一部分相對單純。`,
         },
         {
-          titleEN: "B. Network Effects Analysis",
-          titleZH: "B. 網路效應分析",
-          contentEN: `**Cross-side (indirect) network effects:**
-- More women → more potential matches for men → more value for men (and vice versa)
-- BUT eHarmony's model complicates this: Waldorf noted, "Two years ago, I believed that we had diminishing returns to subscribers in the network. I no longer believe this at all. There is still a massive user satisfaction effect to having more users."
-- The mechanism: more users → more potential high-quality matches for the algorithm to select from → better match quality → higher satisfaction → higher re-subscription
-
-**Same-side (direct) network effects:**
-- Traditionally NEGATIVE in dating: more men competing for the same women = worse for each individual man (congestion). DIY sites suffered heavily from this — women were "inundated by messages from men"
-- eHarmony's algorithm MITIGATES negative same-side effects by controlling who matches with whom, preventing the "inundation" problem
-
-**Data Network Effects (key for "Prediction Factory" lens):**
-- [INFERENCE] More users completing the questionnaire → richer dataset → better algorithm calibration → better predictions → higher match quality → more satisfied users → more users. This is the critical data flywheel.
-- The 4,000-couple validation study and ongoing Labs research continuously feed back into algorithm improvement.
-
-**Network effects are DESIGNED, not inherent:**
-- The questionnaire screens out low-quality participants (self-selection + company rejection)
-- Guided Communication forces depth of interaction
-- Algorithm controls matching, preventing the congestion/superficiality problems of open platforms`,
-          contentZH: `**跨邊（間接）網路效應：**
-- 更多女性 → 更多潛在配對給男性 → 對男性更有價值（反之亦然）
-- 但 eHarmony 的模式使此更為複雜：Waldorf 指出，「兩年前，我相信我們在網路中的訂閱者存在遞減報酬。我現在完全不這麼認為了。更多使用者帶來的使用者滿意度效應仍然是巨大的。」
-- 機制：更多使用者 → 演算法有更多高品質配對候選 → 更好的配對品質 → 更高滿意度 → 更高續訂率
-
-**同邊（直接）網路效應：**
-- 在交友領域傳統上為負面：更多男性競爭同樣的女性 = 對每位男性更差（壅塞）。自助式網站深受其害——女性被「男性的訊息淹沒」
-- eHarmony 的演算法透過控制誰與誰配對來**緩解負面同邊效應**，防止「訊息轟炸」問題
-
-**資料網路效應（「預測工廠」視角的關鍵）：**
-- [推論] 更多使用者完成問卷 → 更豐富的資料集 → 更好的演算法校準 → 更好的預測 → 更高的配對品質 → 更多滿意使用者 → 更多使用者。這是關鍵的資料飛輪。
-- 4,000對伴侶的驗證研究與持續進行的 Labs 研究不斷回饋至演算法的改進。
-
-**網路效應是被設計的，而非天生的：**
-- 問卷篩選掉低品質參與者（自我篩選 + 公司拒絕）
-- 引導式溝通強制互動深度
-- 演算法控制配對，防止開放平台的壅塞／膚淺問題`
+          label: "class-lens",
+          titleEN: "What is the use case?",
+          titleZH: "什麼是 use case？",
+          contentEN: `The use case is not generic social interaction. It is serious partner search under uncertainty, where the user wants a better chance of finding a satisfying long-term partner without suffering the congestion, superficiality, and low-trust environment common on open personals sites.`,
+          contentZH: `這裡的 use case 不是一般社交互動，而是在高度不確定下尋找認真伴侶。使用者想要的是：提高找到長期適合對象的機率，同時避免開放式交友平台常見的壅塞、膚淺與低信任環境。`,
         },
         {
-          titleEN: "C. Dimensions of Value (DoV) for Users Seeking Serious Relationships",
-          titleZH: "C. 尋求認真關係使用者的價值維度（DoV）",
-          contentEN: `**Key Dimensions of Value in the dating/matching market:**
-
-1. **Match quality / compatibility accuracy** — How likely is a match to lead to a satisfying long-term relationship?
-2. **Pool size / variety of potential matches** — How many eligible partners are available?
-3. **Safety & trust / screening quality** — How confident can users be that profiles are genuine and members are serious?
-4. **Privacy / stigma reduction** — Can users participate without social embarrassment?
-5. **Depth of information about matches** — How much do you learn about a person before deciding?
-6. **Ease of use / time efficiency** — How quickly and easily can users engage?
-7. **Price / affordability** — Total cost of participation
-8. **Communication quality** — Does the platform facilitate meaningful conversation?
-9. **Success rate** — Track record of producing marriages/long-term relationships
-10. **Emotional experience** — Does the process feel respectful, hopeful, and dignified?`,
-          contentZH: `**交友／配對市場的關鍵價值維度：**
-
-1. **配對品質／相容性準確度** — 配對導致令人滿意的長期關係的可能性有多高？
-2. **候選池大小／潛在配對的多樣性** — 有多少符合條件的伴侶可供選擇？
-3. **安全與信任／篩選品質** — 使用者對個人檔案真實性及會員認真程度有多大信心？
-4. **隱私／降低社會汙名** — 使用者能否在不尷尬的情況下參與？
-5. **配對資訊深度** — 在做決定前能了解一個人多少？
-6. **易用性／時間效率** — 使用者參與的速度和便利性如何？
-7. **價格／可負擔性** — 參與的總成本
-8. **溝通品質** — 平台是否促進有意義的對話？
-9. **成功率** — 促成婚姻／長期關係的歷史記錄
-10. **情感體驗** — 過程是否讓人感到被尊重、充滿希望且有尊嚴？`
+          label: "class-lens",
+          titleEN: "Dimensions of value that matter most",
+          titleZH: "最重要的價值維度",
+          contentEN: `The most relevant dimensions of value are:
+- Match quality and compatibility confidence
+- Candidate-pool depth and variety
+- Safety, seriousness, and screening credibility
+- Information depth before meeting
+- Emotional dignity and hopefulness of the process
+- Ease and speed
+- Price affordability
+- Communication structure and depth
+- Historical success rate`,
+          contentZH: `最重要的價值維度包括：
+- 配對品質與相容性信心
+- 候選池深度與多樣性
+- 安全性、認真程度與篩選可信度
+- 見面前可取得的資訊深度
+- 過程是否讓人保有尊嚴與希望感
+- 使用便利與速度
+- 價格可負擔性
+- 溝通的結構與深度
+- 歷史成功率`,
         },
         {
-          titleEN: "D. Value Curve Comparison: eHarmony vs. Competitors",
-          titleZH: "D. 價值曲線比較：eHarmony vs. 競爭對手",
-          contentEN: `**eHarmony's Value Curve (HIGH on):**
-- Match quality/compatibility: VERY HIGH (patented algorithm, 29 dimensions, validated against outcomes)
-- Safety/trust/screening: VERY HIGH (rejects 20% of applicants, extensive questionnaire as barrier)
-- Depth of information: HIGH (Guided Communication forces deep exchanges)
-- Communication quality: HIGH (structured process prevents superficial exchanges)
-- Success rate: VERY HIGH (2% of all US marriages; 236/day)
-- Emotional experience: HIGH (dignified, relationship-focused branding)
+          label: "fact",
+          titleEN: "Is eHarmony a platform?",
+          titleZH: "eHarmony 算平台嗎？",
+          contentEN: `It can be analyzed as a two-sided matching platform because men and women on different sides create value for one another through the mediated possibility of matching.
 
-**eHarmony's Value Curve (LOW on):**
-- Pool size/variety: MODERATE-LOW (screens out many; no same-sex; no casual daters)
-- Ease of use/time efficiency: LOW (1.5-2 hours for questionnaire; slow Guided Communication process)
-- Price/affordability: LOW (roughly 2x competitors)
-- User control/autonomy: VERY LOW (cannot browse; algorithm decides matches)
+However, it is not an open do-it-yourself platform. Users do not browse and freely message the entire pool. The platform is curated and controlled. That is why, in this module, the stronger description is often “prediction-driven operating model” rather than simply “platform.”`,
+          contentZH: `它可以被分析為雙邊配對平台，因為不同邊的男性與女性，是透過被中介的配對可能性為彼此創造價值。
 
-**Match/Chemistry Value Curve:**
-- Pool size: HIGH (1.2M paying at Match; less selective screening)
-- Price: MODERATE (roughly 10% below eHarmony for Chemistry)
-- Ease of use: HIGH (browse freely; Chemistry questionnaire shorter)
-- Match quality: MODERATE (Chemistry's algorithm less validated)
-- Safety/trust: LOW-MODERATE (minimal screening)
+但它不是開放式 DIY 平台。使用者無法自由瀏覽整個池子，也不能任意向所有人發訊息。整個平台是被策展與控制的。因此，在本模組中，常常用「預測驅動的營運模式」來描述它，比單純稱作平台更有分析力。`,
+        },
+        {
+          label: "inference",
+          titleEN: "Why DIY sites structurally struggle",
+          titleZH: "為何 DIY 網站在結構上容易出問題",
+          contentEN: `Open browse-and-message systems create congestion, superficial filtering, and trust problems. Women can be overwhelmed by inbound messages, users can optimize for photos or surface traits rather than long-term compatibility, and the matching problem becomes decentralized and noisy.
 
-**Free Sites (Plenty of Fish) Value Curve:**
-- Price: VERY HIGH (free)
-- Pool size: VERY HIGH (minimal barriers)
-- Ease/speed: HIGH (immediate access)
-- Match quality: VERY LOW (no algorithm; self-service browsing)
-- Safety/trust: LOW (no screening; misrepresentation rampant)
+eHarmony sacrifices autonomy and speed in order to reduce those structural failures.`,
+          contentZH: `開放式瀏覽與自由訊息系統，容易產生壅塞、膚淺篩選與信任問題。女性可能被大量訊息淹沒，使用者也可能過度依賴照片或表層條件，而不是長期相容性，結果讓配對問題變得分散且混亂。
 
-**Social Networks Value Curve:**
-- Price: VERY HIGH (free)
-- Trust/authenticity: HIGH (real identities, friend connections verify)
-- Pool size: VERY HIGH
-- Match quality: LOW (no matching purpose; no compatibility data)
-- Privacy for dating: LOW (40%+ didn't indicate marital status; public activity visible)
-- Useful for 40-50+ age group: LOW (social networks used less by this demographic)`,
-          contentZH: `**eHarmony 的價值曲線（高分項）：**
-- 配對品質／相容性：極高（專利演算法、29項維度、以結果驗證）
-- 安全／信任／篩選：極高（拒絕20%申請者、大量問卷作為門檻）
-- 資訊深度：高（引導式溝通強制深度交流）
-- 溝通品質：高（結構化流程防止膚淺交流）
-- 成功率：極高（全美婚姻的2%；每天236對）
-- 情感體驗：高（有尊嚴、以關係為核心的品牌形象）
+eHarmony 犧牲了部分自主與速度，換取對這些結構性失敗的控制。`,
+        },
+      ],
+    },
+    {
+      id: "network-effects",
+      titleEN: "V. Network Effects and the Data Flywheel",
+      titleZH: "五、網路效應與資料飛輪",
+      tag: "INFERENCE + CLASS LENS",
+      tagZH: "推論 + 課程視角",
+      icon: "gitBranch",
+      summaryEN: "The case supports cross-side effects directly; the richer data-flywheel interpretation is analytically strong but should be labeled as inference.",
+      summaryZH: "個案直接支持跨邊效應，而較完整的資料飛輪說法雖然分析上很強，但應明確標示為推論。",
+      subsections: [
+        {
+          label: "fact",
+          titleEN: "Cross-side effects",
+          titleZH: "跨邊效應",
+          contentEN: `At a basic level, more serious users on one side create more match opportunities for users on the other side. In a matching market, that is the standard cross-side effect.
 
-**eHarmony 的價值曲線（低分項）：**
-- 候選池大小／多樣性：中低（篩選掉許多人；無同性配對；無隨意約會者）
-- 易用性／時間效率：低（問卷需1.5-2小時；引導式溝通過程緩慢）
-- 價格／可負擔性：低（約為競爭對手的兩倍）
-- 使用者控制／自主性：極低（無法瀏覽；演算法決定配對）
+Waldorf’s shift in view is important: he no longer believed the firm faced diminishing returns to additional subscribers. Instead, a larger network still improved user satisfaction through access to more viable matches.`,
+          contentZH: `在最基本層次上，一邊更多認真的使用者，會為另一邊創造更多配對機會。這是配對市場中典型的跨邊效應。
 
-**Match／Chemistry 的價值曲線：**
-- 候選池：高（Match 有120萬付費會員；篩選較不嚴格）
-- 價格：中等（Chemistry 約低 eHarmony 10%）
-- 易用性：高（自由瀏覽；Chemistry 問卷較短）
-- 配對品質：中等（Chemistry 的演算法驗證較不充分）
-- 安全／信任：中低（篩選極少）
+Waldorf 的觀點轉變很重要：他不再相信新增訂閱者會帶來遞減報酬。相反地，更大的網路仍能透過更多可行配對來提升使用者滿意度。`,
+        },
+        {
+          label: "fact",
+          titleEN: "Negative same-side effects in dating",
+          titleZH: "交友市場中的負面同邊效應",
+          contentEN: `Dating markets often suffer negative same-side effects. More users on the same side can intensify competition and congestion. Open sites are especially vulnerable because users can flood one another with low-quality outreach.
 
-**免費網站（Plenty of Fish）的價值曲線：**
-- 價格：極高（免費）
-- 候選池：極高（門檻極低）
-- 便利／速度：高（即時存取）
-- 配對品質：極低（無演算法；自助瀏覽）
-- 安全／信任：低（無篩選；虛假資料泛濫）
+eHarmony’s controlled matching system mitigates this by rationing exposure and limiting uncontrolled interaction.`,
+          contentZH: `交友市場常見負面同邊效應。同一邊更多人，可能代表更激烈的競爭與更嚴重的壅塞。開放式網站尤其脆弱，因為使用者可以以低品質方式大量接觸對方。
 
-**社群網路的價值曲線：**
-- 價格：極高（免費）
-- 信任／真實性：高（真實身分、朋友連結可驗證）
-- 候選池：極高
-- 配對品質：低（無配對目的；無相容性資料）
-- 約會隱私：低（超過40%未標示婚姻狀態；活動公開可見）
-- 對40-50歲以上族群的實用性：低（此族群較少使用社群網路）`
-        }
-      ]
+eHarmony 透過受控配對來緩解這個問題，限制無節制曝光與互動。`,
+        },
+        {
+          label: "inference",
+          titleEN: "Data flywheel",
+          titleZH: "資料飛輪",
+          contentEN: `A strong analytical inference is that eHarmony also benefits from a data-mediated flywheel:
+- More serious users complete the questionnaire
+- The system has a richer pool of structured candidates
+- Match quality can improve because the algorithm selects from a deeper set of plausible partners
+- Better outcomes improve satisfaction, credibility, and renewal
+- That attracts or retains more serious users
+
+This is not spelled out as a neat loop in the case, but it is highly consistent with the case facts and with the course’s prediction-factory lens.`,
+          contentZH: `一個很強的分析推論是：eHarmony 也受益於資料中介飛輪：
+- 更多認真的使用者完成問卷
+- 系統擁有更豐富的結構化候選池
+- 演算法可從更深的合理候選集合中做選擇，因而提升配對品質
+- 更好的結果提升滿意度、可信度與續訂
+- 這又吸引或留住更多認真使用者
+
+個案沒有把它寫成完整閉環，但這種解讀與個案事實及課堂的 prediction-factory lens 高度一致。`,
+        },
+      ],
     },
     {
       id: "prediction",
-      titleEN: "IV. Prediction Factory / Automation of Judgment Analysis",
-      titleZH: "四、預測工廠／判斷自動化分析",
+      titleEN: "VI. Prediction Factory / Weak AI-ML Analysis",
+      titleZH: "六、預測工廠／弱 AI-ML 分析",
       tag: "MODULE II CORE LENS",
       tagZH: "模組二核心視角",
+      icon: "brain",
+      summaryEN: "eHarmony automates a narrow, high-stakes judgment problem using structured data and statistical pattern matching rather than general intelligence.",
+      summaryZH: "eHarmony 以結構化資料與統計式模式比對，自動化一個狹義但高風險的判斷問題，而不是在做一般智慧。",
       subsections: [
         {
-          titleEN: "A. eHarmony as a 'Prediction Factory'",
-          titleZH: "A. eHarmony 作為「預測工廠」",
-          contentEN: `**[CLASS LENS — This is the core analytical frame for this module]**
+          label: "class-lens",
+          titleEN: "What exactly is being predicted?",
+          titleZH: "它到底在預測什麼？",
+          contentEN: `The prediction is not “love” in any general sense. The system is trying to estimate whether two specific people, given their profiles and preferences, are likely to form a satisfying, enduring relationship.
 
-Per Agrawal, Gans & Goldfarb's "Prediction Machines" framework (course reading): AI/ML makes prediction cheaper. When prediction gets cheaper, organizations can redesign operating models around automated prediction.
+That is a narrower and more operationally useful target than generic romance.`,
+          contentZH: `它預測的不是籠統的「愛情」。系統真正要估計的是：給定兩個人的個人檔案與偏好，他們是否較可能形成一段令人滿意且持久的關係。
 
-**What is eHarmony predicting?**
-The core prediction: Given Person A's personality/values/interests profile and Person B's profile, how likely are they to form a satisfying, enduring relationship?
-
-This is a classic "judgment" problem that was historically handled by:
-- Individuals themselves (browsing profiles, going on dates)
-- Professional matchmakers ($1,500-$10,000; charged up to 100x more)
-- Family, friends, community networks
-- Chance encounters (work, church, bars — see Exhibit 7)
-
-**eHarmony automated this judgment.** The matching algorithm replaces human search and intuition with a statistical model trained on couple-outcome data.
-
-**The Prediction Factory Design:**
-1. **Data Collection** → Personality Profile (258-436 structured questions)
-2. **Algorithm / Model** → Patented matching algorithm; validated on 4,000+ couples; predicts Dyadic Adjustment Scale outcomes
-3. **Decision / Action** → Algorithm generates matches; users cannot override by browsing
-4. **Feedback Loop** → Match acceptance/rejection data; marriage outcomes (Harris study); Labs longitudinal research; re-subscription rates as proxy for match satisfaction
-5. **Continuous Improvement** → Labs research feeding new insights back into the model
-
-**Key insight:** eHarmony doesn't just USE an algorithm — its entire operating model IS the prediction factory. Remove the algorithm, and the business has no value proposition. The questionnaire, the matching, the Guided Communication, the rejection of unsuitable applicants — all are designed to serve the prediction.`,
-          contentZH: `**[課程視角 — 此為本模組的核心分析框架]**
-
-依據 Agrawal、Gans 與 Goldfarb 的「預測機器」框架（課程指定閱讀）：AI/ML 使預測變得更便宜。當預測變便宜時，組織可以圍繞自動化預測重新設計營運模式。
-
-**eHarmony 在預測什麼？**
-核心預測：給定 A 的性格／價值觀／興趣檔案與 B 的檔案，他們形成一段令人滿意且持久的關係的可能性有多高？
-
-這是一個典型的「判斷」問題，歷史上由以下方式處理：
-- 個人自行處理（瀏覽檔案、約會）
-- 專業媒人（收費$1,500-$10,000；費用高達100倍）
-- 家人、朋友、社區網路
-- 偶然相遇（工作、教會、酒吧 — 見附錄7）
-
-**eHarmony 自動化了這項判斷。** 配對演算法以經過伴侶結果資料訓練的統計模型取代了人類的搜尋與直覺。
-
-**預測工廠設計：**
-1. **資料蒐集** → 個性檔案（258-436題結構化問題）
-2. **演算法／模型** → 專利配對演算法；以4,000對以上伴侶驗證；預測「雙方適應量表」結果
-3. **決策／行動** → 演算法產生配對；使用者無法透過瀏覽覆寫
-4. **回饋迴路** → 配對接受／拒絕資料；婚姻結果（Harris 研究）；Labs 縱貫研究；續訂率作為配對滿意度的代理變數
-5. **持續改善** → Labs 研究將新洞察回饋至模型
-
-**關鍵洞察：** eHarmony 不僅僅是使用演算法——其整個營運模式本身就是預測工廠。移除演算法，這個企業就沒有價值主張。問卷、配對、引導式溝通、拒絕不合適的申請者——一切都是為了服務預測。`
+這是一個比抽象浪漫更狹義、也更能被營運化的預測目標。`,
         },
         {
-          titleEN: "B. Algorithm Design Choices & Trade-offs",
-          titleZH: "B. 演算法設計選擇與取捨",
-          contentEN: `**Similarity vs. Complementarity:**
-- Team was "convinced that successful relationships were almost universally characterized by a high degree of similarity, particularly in areas like intellectual ability and emotional stability"
-- Priority order: personality characteristics > values > interests
-- Agreeableness and emotional stability identified as "very important"
-- This CONTRADICTS popular wisdom that "opposites attract"
-
-**Validation Methodology — a pragmatic compromise:**
-- Ideal: longitudinal study tracking singles through matching → dating → marriage → long-term outcomes
-- Actual: studied already-married couples; assumed "if we got really good at predicting satisfied and happy marriages, that we could apply that to singles"
-- This is a significant methodological limitation — survivorship bias, selection bias
-
-**What the algorithm does NOT use:**
-- Does not incorporate feedback from rejected matches ("You don't like that this person has a pet, or you're a vegetarian but you keep being matched with hunters" — this was a KNOWN limitation; improving screening preferences was "a next generation feature in the works")
-- Does not factor in physical attraction (photos were added later; members with photos 9-15x more likely to receive messages)
-
-**[INFERENCE — Prediction Factory assessment:]**
-- This is "weak" AI/ML: statistical pattern-matching on structured questionnaire data, not deep learning
-- The algorithm is essentially a compatibility scoring function validated against outcome data
-- Significant room for improvement: behavioral data from platform interactions (which questions people answer, how they respond in Guided Communication, what matches they close vs. pursue) could dramatically enhance predictive power
-- The algorithm treats the prediction as a ONE-TIME classification at sign-up rather than a continuously updating model`,
-          contentZH: `**相似性 vs. 互補性：**
-- 團隊「確信成功的關係幾乎普遍以高度相似性為特徵，特別是在智力能力和情緒穩定性等領域」
-- 優先順序：性格特質 > 價值觀 > 興趣
-- 隨和性與情緒穩定性被認定為「非常重要」
-- 這與「異性相吸」的流行觀點相矛盾
-
-**驗證方法 — 務實的折衷：**
-- 理想做法：縱貫研究追蹤單身者從配對 → 約會 → 結婚 → 長期結果
-- 實際做法：研究已婚伴侶；假設「如果我們能非常準確地預測滿意且幸福的婚姻，就能將此應用於單身者」
-- 這是一個重大的方法論限制——倖存者偏差、選擇偏差
-
-**演算法未使用的資料：**
-- 未納入被拒絕配對的回饋（「你不喜歡這個人養寵物，或你是素食者但一直被配對給獵人」——這是已知的限制；改善篩選偏好是「開發中的下一代功能」）
-- 未考慮外貌吸引力（照片是後來才加入的；有照片的會員收到訊息的可能性高出9-15倍）
-
-**[推論 — 預測工廠評估：]**
-- 這是「弱」AI/ML：基於結構化問卷資料的統計模式比對，而非深度學習
-- 演算法本質上是一個以結果資料驗證的相容性評分函數
-- 有很大的改善空間：來自平台互動的行為資料（使用者回答了哪些問題、在引導式溝通中如何回應、哪些配對被關閉 vs. 被追求）可大幅增強預測能力
-- 演算法將預測視為註冊時的一次性分類，而非持續更新的模型`
+          label: "fact",
+          titleEN: "How the model was built",
+          titleZH: "模型如何被建立",
+          contentEN: `The company built its logic around married-couple research. It surveyed couples, designed its measurement instrument, and validated the algorithm against married-couple outcomes using the Dyadic Adjustment Scale. In theoretical terms, the company believed successful relationships were strongly associated with similarity, especially on personality-related dimensions such as agreeableness and emotional stability. Personality mattered most, then values, then interests.`,
+          contentZH: `公司是以已婚伴侶研究作為基礎來建構其邏輯。它先調查伴侶、設計量表，再用已婚伴侶結果透過 Dyadic Adjustment Scale 驗證演算法。理論上，公司相信成功關係通常與高度相似性有關，尤其是在性格相關維度上，例如隨和性與情緒穩定性。其優先順序是 personality，再來是 values，最後是 interests。`,
         },
         {
-          titleEN: "C. Complementary Operating Model Choices That Serve the Prediction",
-          titleZH: "C. 服務預測的互補營運模式選擇",
-          contentEN: `Every major operating model choice at eHarmony reinforces the prediction factory:
+          label: "fact",
+          titleEN: "Methodological limitation",
+          titleZH: "方法論限制",
+          contentEN: `The ideal research design would have followed singles through matching, dating, marriage, and long-term outcomes. eHarmony did not have that full path early on. Instead, it inferred from already-married couples and then applied those lessons to singles.
 
-**1. Long questionnaire (1.5-2 hours) →** Rich, structured input data for the algorithm; also self-selects for serious users (men drop out more → the ones who complete are more committed)
+That is a pragmatic design, but it carries real survivorship and selection-bias concerns.`,
+          contentZH: `理想的研究設計，是從單身者開始一路追蹤到配對、約會、結婚與長期結果。eHarmony 早期並沒有完整做到這一點，而是先從已婚伴侶回推，再把經驗套用到單身者上。
 
-**2. Rejection of 20% of applicants →** Cleaner data; removes users the algorithm cannot serve well (already married, serial divorcers); maintains prediction quality even at cost of $10M/year
+這是務實的設計，但同時也帶有明確的倖存者偏差與選擇偏差問題。`,
+        },
+        {
+          label: "fact",
+          titleEN: "What the model did not fully incorporate",
+          titleZH: "模型沒有完整納入哪些東西",
+          contentEN: `The model did not fully learn from downstream user rejections in a dynamic way. The case explicitly notes limitations around preference mismatches such as pets or hunting. Physical attraction also sat awkwardly in the model. Photos mattered behaviorally, but Buckwalter argued physical attraction was weak as a predictor of long-term success.`,
+          contentZH: `模型沒有以高度動態的方式去學習使用者在後段互動中的拒絕訊號。個案明確提到像寵物或打獵等偏好錯配，都是系統的已知限制。外貌吸引力也和模型存在緊張關係：雖然照片在行為上明顯重要，但 Buckwalter 同時主張外貌對長期成功的預測力很弱。`,
+        },
+        {
+          label: "inference",
+          titleEN: "Why this is “weak” AI/ML",
+          titleZH: "為何這屬於「弱」AI/ML",
+          contentEN: `This is a classic weak-AI / weak-ML configuration. The system is narrow, domain-specific, and built on structured inputs plus statistical pattern matching. It is not autonomous reasoning, not general-purpose intelligence, and not a continuously self-updating deep learning system.
 
-**3. No browsing allowed →** Forces reliance on the algorithm's prediction; prevents users from making superficial choices that undermine the algorithm's logic
+Its strength is not breadth. Its strength is disciplined scope and operational embedding.`,
+          contentZH: `這是一個典型的弱 AI／弱 ML 配置。系統的範圍狹窄、問題特定，依靠的是結構化輸入加上統計式模式比對。它不是自主推理，不是通用智慧，也不是一個持續自我更新的深度學習系統。
 
-**4. Guided Communication (not free messaging) →** Generates rich behavioral data; forces depth; reduces the "huge letdown" of offline meetings by ensuring deeper pre-meeting compatibility assessment
-
-**5. Premium pricing (~2x competitors) →** Signals quality and seriousness; selects for marriage-minded users who value the prediction; funds the R&D to improve the algorithm
-
-**6. eHarmony Labs investment →** Closes the feedback loop; enables continuous algorithm improvement through longitudinal couple studies and neuroscience/sociology research
-
-**7. Marketing focused on success stories →** Reinforces that the VALUE is the prediction outcome (marriages), not the browsing experience
-
-**[CLASS LENS]** This is a textbook example of Boudreau's "operating model as a set of complementary choices" — each practice reinforces the others and collectively delivers a value curve that cannot be replicated by changing just one or two elements.`,
-          contentZH: `eHarmony 的每一項重大營運模式選擇都強化了預測工廠：
-
-**1. 長問卷（1.5-2小時）→** 為演算法提供豐富、結構化的輸入資料；同時自我篩選出認真的使用者（男性較易中途放棄 → 完成者更有承諾感）
-
-**2. 拒絕20%的申請者 →** 更乾淨的資料；移除演算法無法良好服務的使用者（已婚、多次離婚者）；即使每年損失1,000萬美元也要維護預測品質
-
-**3. 不允許瀏覽 →** 強制依賴演算法的預測；防止使用者做出破壞演算法邏輯的膚淺選擇
-
-**4. 引導式溝通（非自由訊息傳遞）→** 產生豐富的行為資料；強制深度；透過確保更深層的見面前相容性評估，減少線下見面的「巨大失望」
-
-**5. 溢價定價（約為競爭對手的兩倍）→** 傳達品質與認真態度的訊號；篩選出重視預測的以婚姻為目標的使用者；資助改善演算法的研發
-
-**6. eHarmony Labs 投資 →** 閉合回饋迴路；透過縱貫伴侶研究與神經科學／社會學研究實現演算法的持續改善
-
-**7. 行銷聚焦成功故事 →** 強化價值在於預測結果（婚姻），而非瀏覽體驗
-
-**[課程視角]** 這是 Boudreau「營運模式作為互補選擇的集合」的教科書範例——每項實務做法相互強化，共同提供一條無法僅靠改變一兩個元素就能複製的價值曲線。`
-        }
-      ]
+它的強項不在廣度，而在於明確範圍與營運嵌入。`,
+        },
+      ],
     },
     {
-      id: "options",
-      titleEN: "V. The Four Strategic Options",
-      titleZH: "五、四個策略選項",
+      id: "operating-model",
+      titleEN: "VII. Operating Model as Complementary Choices",
+      titleZH: "七、作為互補選擇集合的營運模式",
+      tag: "CLASS LENS",
+      tagZH: "課程視角",
+      icon: "layout",
+      summaryEN: "The major analytical payoff is showing that eHarmony’s choices reinforce one another instead of standing alone.",
+      summaryZH: "這一節的分析價值，在於證明 eHarmony 的關鍵選擇彼此強化，而不是各自孤立存在。",
       subsections: [
         {
-          titleEN: "Option 1: Defend Core Position — Rapid Membership Growth",
-          titleZH: "選項一：防守核心定位 — 快速會員增長",
-          contentEN: `**Description:** Aggressively grow paying memberships in the long-term relationship segment to deny Chemistry room to grow.
+          label: "class-lens",
+          titleEN: "The complementary system",
+          titleZH: "互補系統",
+          contentEN: `Every major design choice serves the same strategic logic:
+- Long questionnaire generates richer structured input and screens for seriousness
+- Selective admission protects pool quality and model credibility
+- No browsing forces reliance on the algorithm instead of superficial user sorting
+- Guided Communication creates structure and depth in the interaction path
+- Premium pricing signals seriousness and helps fund R&D
+- Research investment improves credibility and supports model refinement
 
-**Tactics discussed:** Increase advertising; reduce barriers to joining (shorten questionnaire? relax rejection criteria?); encourage Fast Track; sell memberships to anyone who wants to purchase.
+This is why the firm’s advantage is difficult to copy by imitating just one feature.`,
+          contentZH: `每一項重大設計選擇，都在服務同一套策略邏輯：
+- 長問卷提供更豐富的結構化輸入，同時篩選出更認真的人
+- 選擇性准入保護 pool quality 與模型可信度
+- 不允許瀏覽，強迫使用者依賴演算法，而非表層篩選
+- Guided Communication 讓互動流程更有結構與深度
+- 溢價定價傳遞認真與高品質訊號，也支撐研發投入
+- 研究投資提升可信度並支持模型修正
 
-**Prediction Factory implications:**
-- [INFERENCE] Relaxing quality controls (selling to anyone, shortening questionnaire) would DEGRADE the prediction factory's input data quality
-- Waldorf's shift: "I no longer believe [in diminishing returns to subscribers]" — suggests belief that MORE data improves matching
-- BUT: selling memberships to previously rejected users means the algorithm cannot confidently serve them → recommending matches the system cannot be confident in
-- Tension: short-term revenue/market defense vs. long-term prediction quality
-
-**Risk:** Undermines the very thing that differentiates eHarmony — the curated, high-quality prediction.`,
-          contentZH: `**說明：** 積極擴大長期關係領域的付費會員人數，阻止 Chemistry 獲得成長空間。
-
-**討論的策略：** 增加廣告；降低加入門檻（縮短問卷？放寬拒絕標準？）；鼓勵快速通道；向任何願意購買的人銷售會籍。
-
-**預測工廠意涵：**
-- [推論] 放寬品質控制（向任何人銷售、縮短問卷）會**降低**預測工廠的輸入資料品質
-- Waldorf 的觀點轉變：「我不再相信[訂閱者的遞減報酬]」——暗示相信更多資料能改善配對
-- 但是：向先前被拒絕的使用者銷售會籍意味著演算法無法有信心地服務他們 → 推薦系統無法確信的配對
-- 張力：短期營收／市場防禦 vs. 長期預測品質
-
-**風險：** 破壞使 eHarmony 與眾不同的根本——策展式的高品質預測。`
+這就是為什麼競爭者不容易只靠模仿單一功能就複製其優勢。`,
         },
         {
-          titleEN: "Option 2: Broaden to Include Casual/Medium-Term Daters",
-          titleZH: "選項二：擴展至休閒／中期約會者",
-          contentEN: `**Description:** Expand the customer base to include medium-term relationship seekers (not just marriage-minded).
+          label: "inference",
+          titleEN: "What would break the system?",
+          titleZH: "什麼會破壞這套系統？",
+          contentEN: `The model weakens if the company expands pool size at the cost of seriousness, data quality, or matching discipline. It also weakens if users stop believing that the algorithm produces meaningfully better matches than open alternatives.
 
-**Prediction Factory implications:**
-- [INFERENCE] This fundamentally changes WHAT is being predicted. The algorithm was validated against long-term marital satisfaction (Dyadic Adjustment Scale). Predicting "medium-term relationship compatibility" is a DIFFERENT prediction problem.
-- Would require retraining or building a second algorithm
-- Only ~5% of 94M US singles were paying members of any online personals site → huge untapped market
-- Waldorf believed the matching algorithm could provide differentiation even in this segment
+In other words, the firm’s moat is not “more users” in the abstract. It is a particular kind of user pool plus a particular operating discipline.`,
+          contentZH: `如果公司為了擴大池子而犧牲認真程度、資料品質或配對紀律，這套模型就會弱化。另一個風險，是使用者不再相信演算法能明顯比開放式替代品做出更好的配對。
 
-**Risk:** Direct competition with Match and Yahoo! Personals on their turf; potential brand dilution; no validated algorithm for this use case.`,
-          contentZH: `**說明：** 擴大客戶群以包含中期關係尋求者（不僅限於以婚姻為目標者）。
-
-**預測工廠意涵：**
-- [推論] 這從根本上改變了預測的對象。演算法是以長期婚姻滿意度（「雙方適應量表」）驗證的。預測「中期關係相容性」是一個不同的預測問題。
-- 需要重新訓練或建立第二套演算法
-- 9,400萬美國單身者中僅約5%是任何線上交友網站的付費會員 → 巨大的未開發市場
-- Waldorf 相信配對演算法即使在此領域也能提供差異化
-
-**風險：** 在 Match 和 Yahoo! Personals 的地盤上直接競爭；品牌稀釋風險；此使用情境無經過驗證的演算法。`
+換句話說，公司的護城河不是抽象的「更多使用者」，而是特定性質的使用者池，加上一整套特定的營運紀律。`,
         },
-        {
-          titleEN: "Option 3: New Business — Life Stage Sites (Leveraging Research)",
-          titleZH: "選項三：新事業 — 人生階段網站（善用研究成果）",
-          contentEN: `**Description:** Build a network of eHarmony-branded sites focused on life-stage transitions: weddings, pregnancy/fertility, parenting, elder care. Free-to-use, ad-supported.
-
-**Prediction Factory implications:**
-- [INFERENCE] This leverages the RESEARCH side of the prediction factory (Labs' longitudinal study of 400 couples) rather than the matching algorithm itself
-- Extends the prediction from "who should you marry?" to "how do you navigate life after marriage?"
-- Would generate NEW data types: post-marriage behavioral data, life-stage transition data
-- Revenue model shifts from subscription to advertising → fundamentally different business model
-- Expert advice + community from other users = platform with content + network effects
-
-**Risk:** Completely different competency required; no proven revenue model; stretches the brand; diverts resources from core dating business.`,
-          contentZH: `**說明：** 建立以 eHarmony 品牌為核心的人生階段網站網路，聚焦於人生重大轉折：婚禮、懷孕／生育、育兒、長照。免費使用，廣告支撐。
-
-**預測工廠意涵：**
-- [推論] 這利用的是預測工廠的研究端（Labs 對400對伴侶的縱貫研究），而非配對演算法本身
-- 將預測從「你應該嫁／娶誰？」延伸至「婚後如何面對人生？」
-- 將產生新類型的資料：婚後行為資料、人生階段轉換資料
-- 營收模式從訂閱轉為廣告 → 根本不同的商業模式
-- 專家建議 + 其他使用者的社群 = 具有內容與網路效應的平台
-
-**風險：** 需要完全不同的核心能力；無經過驗證的營收模式；延伸品牌；分散核心交友事業的資源。`
-        },
-        {
-          titleEN: "Option 4: Geographic Expansion (International)",
-          titleZH: "選項四：地理擴張（國際化）",
-          contentEN: `**Description:** Expand to English-speaking countries first, then EU nations where online dating was already popular.
-
-**Prediction Factory implications:**
-- [INFERENCE] Critical question: Does the matching algorithm's predictions TRANSFER across cultures? The algorithm was validated on US couples. Relationship expectations, compatibility dimensions, and cultural norms vary significantly across countries (see Exhibit 4: attitudes toward marriage vary enormously — e.g., only 10% of Americans consider marriage "out-dated" vs. 36% of French).
-- Would need to re-validate the algorithm in each new cultural context
-- Match was already present in 30+ countries, including 7 new countries recently — first-mover risk
-- Data collection challenge: need large user base in each geography for the algorithm to have sufficient matching pool
-
-**Risk:** Algorithm may not transfer; competitors already present; resource-intensive; cultural adaptation required.`,
-          contentZH: `**說明：** 先擴展至英語系國家，再進入線上交友已流行的歐盟國家。
-
-**預測工廠意涵：**
-- [推論] 關鍵問題：配對演算法的預測能否跨文化遷移？演算法是以美國伴侶驗證的。關係期望、相容性維度與文化規範在不同國家間差異極大（見附錄4：對婚姻的態度差異巨大——例如僅10%的美國人認為婚姻「過時」，法國人則為36%）。
-- 需要在每個新的文化脈絡中重新驗證演算法
-- Match 已進入30多個國家，包括近期新進的7個國家——先行者風險
-- 資料蒐集挑戰：需要每個地區有足夠的使用者基礎，演算法才有充足的配對池
-
-**風險：** 演算法可能無法遷移；競爭對手已先行布局；資源密集；需要文化適應。`
-        }
-      ]
+      ],
     },
     {
-      id: "coldcall",
-      titleEN: "VI. Cold-Call Preparation",
-      titleZH: "六、冷叫準備",
+      id: "strategy",
+      titleEN: "VIII. Strategic Options and Recommendation Logic",
+      titleZH: "八、策略選項與建議邏輯",
+      icon: "target",
+      summaryEN: "The best answer is not to list all four options. It is to connect each option to the prediction system it would protect, stretch, or undermine.",
+      summaryZH: "最好的答法不是把四個選項照表列出，而是說明每個選項會保護、延伸，還是破壞哪一種預測系統。",
       subsections: [
         {
-          titleEN: "Likely Opening Questions & Model Answers",
-          titleZH: "可能的開場問題與範例答案",
-          contentEN: `**Q: "What is eHarmony's core business? Is it a platform?"**
-A: eHarmony is a matching platform operating in a two-sided dating market. But unlike typical DIY dating platforms where users browse and self-select, eHarmony's operating model is built around an automated prediction — a patented algorithm that determines who matches with whom. Users cannot browse independently. So it is more accurately described as a "prediction factory" that happens to be organized as a platform, rather than a platform that happens to use an algorithm.
+          label: "fact",
+          titleEN: "Option 1",
+          titleZH: "選項一",
+          contentEN: `Defend the core serious-relationship position through faster membership growth. This is the most immediate competitive response because Chemistry was attacking eHarmony’s core value proposition directly.
 
-**Q: "What data does eHarmony have?"**
-A: [Use Section II above — be ready to enumerate 5-8 categories quickly, then drill into the most important: the Personality Profile questionnaire data, the algorithm validation data from 4,000+ couples, and the behavioral data from Guided Communication interactions.]
+The catch is that some tactics discussed under this option, such as loosening admission or shortening the questionnaire too aggressively, could damage the prediction system.`,
+          contentZH: `透過更快會員成長來防守認真關係這個核心定位。由於 Chemistry 直接攻擊 eHarmony 最核心的價值主張，這是最立即的競爭回應。
 
-**Q: "Where do eHarmony's network effects come from? Are they strong?"**
-A: The most important network effect is a DATA network effect: more users → richer training data → better algorithm → better match quality → higher satisfaction → more users. There are also traditional cross-side effects (more men → more value for women, vice versa), but eHarmony's algorithm mediates and controls these, unlike open platforms where raw numbers drive value. Waldorf explicitly states he no longer believes in diminishing returns to network size. The algorithm also mitigates the NEGATIVE same-side effects that plague competitors (congestion, inundation of women by men's messages).
-
-**Q: "Which option should Waldorf choose?"**
-A: [This is the debate question. Be ready to argue any side. The strongest case is probably for a combination of Options 1 and 4, because:]
-- Option 1 (defend core) is necessary in the short term: Chemistry is directly attacking eHarmony's value proposition
-- Option 4 (international) extends the prediction factory to new geographies where the data flywheel can compound
-- Options 2 and 3 are riskier because they require fundamentally different predictions (medium-term compatibility, life-stage guidance) for which eHarmony has no validated algorithm
-- The constraint is resources: "the company could afford to invest in only one or two"
-
-**Q: "What is the role of the algorithm in eHarmony's competitive advantage?"**
-A: The algorithm is the competitive advantage. It is: (1) patented, (2) validated on proprietary data from 4,000+ couples, (3) continuously improved through eHarmony Labs, (4) embedded in an operating model where every other choice (long questionnaire, rejection of applicants, no browsing, Guided Communication, premium pricing) is designed to serve and protect the prediction's quality. Competitors can copy individual features, but replicating the entire complementary system is extremely difficult. Chemistry tried with a different algorithm and methodology, but with lower validation and a different theoretical basis (interpersonal chemistry vs. psychosocial compatibility).`,
-          contentZH: `**問：「eHarmony 的核心業務是什麼？它是平台嗎？」**
-答：eHarmony 是一個在雙邊交友市場中運作的配對平台。但與典型的自助式交友平台（使用者瀏覽並自行選擇）不同，eHarmony 的營運模式圍繞自動化預測而建——一個決定誰與誰配對的專利演算法。使用者無法獨立瀏覽。因此更準確地說，它是一個碰巧以平台形式組織的「預測工廠」，而非一個碰巧使用演算法的平台。
-
-**問：「eHarmony 有什麼資料？」**
-答：[使用上方第二節——準備好快速列舉5-8個類別，然後深入最重要的：個性檔案問卷資料、來自4,000對以上伴侶的演算法驗證資料，以及引導式溝通互動的行為資料。]
-
-**問：「eHarmony 的網路效應從何而來？它們強嗎？」**
-答：最重要的網路效應是資料網路效應：更多使用者 → 更豐富的訓練資料 → 更好的演算法 → 更好的配對品質 → 更高的滿意度 → 更多使用者。也有傳統的跨邊效應（更多男性 → 對女性更有價值，反之亦然），但 eHarmony 的演算法中介並控制這些，不像開放平台中原始數量驅動價值。Waldorf 明確表示他不再相信網路規模有遞減報酬。演算法也緩解了困擾競爭對手的負面同邊效應（壅塞、女性被男性訊息淹沒）。
-
-**問：「Waldorf 應該選哪個選項？」**
-答：[這是辯論題。準備好支持任何一方。最強的論點可能是選項1與4的組合，因為：]
-- 選項1（防守核心）在短期內是必要的：Chemistry 正在直接攻擊 eHarmony 的價值主張
-- 選項4（國際化）將預測工廠擴展至資料飛輪可以複合增長的新地區
-- 選項2和3風險較高，因為它們需要根本不同的預測（中期相容性、人生階段指引），而 eHarmony 並無經過驗證的演算法
-- 限制條件是資源：「公司只能負擔投資一到兩個選項」
-
-**問：「演算法在 eHarmony 的競爭優勢中扮演什麼角色？」**
-答：演算法就是競爭優勢。它是：(1) 受專利保護，(2) 以4,000對以上伴侶的專有資料驗證，(3) 透過 eHarmony Labs 持續改善，(4) 嵌入在一個營運模式中，每個其他選擇（長問卷、拒絕申請者、不可瀏覽、引導式溝通、溢價定價）都是為了服務和保護預測品質。競爭對手可以複製個別功能，但複製整個互補系統極為困難。Chemistry 試圖以不同的演算法和方法論做到，但驗證程度較低且理論基礎不同（人際化學 vs. 心理社會相容性）。`
+但關鍵在於，這個選項底下若採取過度放寬准入或過度縮短問卷等手段，反而可能破壞預測系統本身。`,
         },
         {
-          titleEN: "Key Exhibits to Know",
-          titleZH: "需熟悉的關鍵附錄",
-          contentEN: `- **Exhibit 1:** Demographics of people with marital events (race, age, education, poverty level breakdowns by gender — useful for understanding market segmentation)
-- **Exhibit 2:** Marriage rates by age 1880-2000 (declining trend; later marriage)
-- **Exhibit 3:** Factors reducing divorce risk (income >$50K: -30%; baby after 7mo+: -24%; over 25: -24%; intact family: -14%; religious: -14%; some college: -13%)
-- **Exhibit 4:** International marriage market comparison (US vs. Canada, UK, France, Germany, Italy, Sweden — critical for evaluating Option 4)
-- **Exhibit 5:** Marriage survival rates by cohort (declining durability over time)
-- **Exhibit 6:** Online dating demographics (18-29: 18% tried; 65+: only 3%)
-- **Exhibit 7:** How couples met (work/school: 38%; family/friends: 34%; social venues: 13%; internet: only 4%)
-- **Exhibit 8:** eHarmony Personality Profile structure (11 sections + picture upload; 258 questions across personality, values, interests)
-- **Exhibits 9-10:** Pricing comparison (eHarmony consistently ~2x Match and Yahoo!)
-- **Exhibit 11:** Price comparison with other subscriptions (eHarmony at $19.95/mo vs. gym $74.99, phone $59.99)
-- **Exhibit 12:** Chemistry Personality Test structure (fewer sections; includes right-hand image analysis and visual game)`,
-          contentZH: `- **附錄1：** 具婚姻事件之人口統計（種族、年齡、教育、貧窮水平按性別分類——有助於理解市場區隔）
-- **附錄2：** 1880-2000年各年齡結婚率（下降趨勢；晚婚）
-- **附錄3：** 降低離婚風險的因素（收入>$50K：-30%；懷孕7個月以上後才結婚：-24%；超過25歲：-24%；完整家庭：-14%；有宗教信仰：-14%；大學以上學歷：-13%）
-- **附錄4：** 國際婚姻市場比較（美國 vs. 加拿大、英國、法國、德國、義大利、瑞典——評估選項4的關鍵）
-- **附錄5：** 各世代婚姻存續率（持久性隨時間下降）
-- **附錄6：** 線上交友人口統計（18-29歲：18%嘗試過；65歲以上：僅3%）
-- **附錄7：** 伴侶如何認識的（工作／學校：38%；家人／朋友：34%；社交場所：13%；網路：僅4%）
-- **附錄8：** eHarmony 個性檔案結構（11個部分 + 照片上傳；258題涵蓋性格、價值觀、興趣）
-- **附錄9-10：** 定價比較（eHarmony 持續約為 Match 和 Yahoo! 的兩倍）
-- **附錄11：** 與其他訂閱服務的價格比較（eHarmony $19.95/月 vs. 健身房 $74.99、手機 $59.99）
-- **附錄12：** Chemistry 個性測試結構（較少部分；包含慣用手影像分析與視覺遊戲）`
-        }
-      ]
-    }
-  ]
+          label: "fact",
+          titleEN: "Option 2",
+          titleZH: "選項二",
+          contentEN: `Broaden toward casual or medium-term relationships. This promises a larger market, but it shifts the problem definition. Predicting medium-term compatibility is not the same as predicting long-term satisfaction in marriage-oriented relationships.`,
+          contentZH: `向休閒或中期關係延伸。這雖然對應更大的市場，但它也改變了問題定義。預測中期相容性，不等於預測婚姻導向長期關係的滿意度。`,
+        },
+        {
+          label: "fact",
+          titleEN: "Option 3",
+          titleZH: "選項三",
+          contentEN: `Use eHarmony’s research capabilities to create life-stage sites such as weddings, fertility, parenting, and elder care. This extends the research franchise more than the matching engine itself.
+
+Strategically, this is an adjacency move with a different monetization logic and a different operating model.`,
+          contentZH: `利用 eHarmony 的研究能力，打造婚禮、生育、育兒、長照等人生階段網站。這個方向延伸的，主要是研究能力，而不是配對引擎本身。
+
+在策略上，它屬於鄰接市場延伸，而且對應的是不同的變現方式與不同的營運模式。`,
+        },
+        {
+          label: "fact",
+          titleEN: "Option 4",
+          titleZH: "選項四",
+          contentEN: `Expand internationally, first in English-speaking markets and then potentially into parts of Europe. This is attractive because it could extend the matching model into new geographies.
+
+But culturally contingent attitudes toward marriage and compatibility raise a serious transferability question. A model validated on U.S. couples may not travel cleanly.`,
+          contentZH: `進行國際擴張，先進入英語系市場，再考慮歐洲部分國家。這之所以有吸引力，是因為它可以把配對模型延伸到新的地理市場。
+
+但不同文化對婚姻與相容性的態度差異很大，這使模型可遷移性成為重大問題。以美國伴侶驗證的模型，未必能直接移植。`,
+        },
+        {
+          label: "inference",
+          titleEN: "Most defensible recommendation",
+          titleZH: "最穩健的建議",
+          contentEN: `The most defensible recommendation is Option 1 first, but with a strict condition: preserve the integrity of the prediction system. Defend the core serious-relationship franchise before moving into broader adjacency or international expansion.
+
+If a second move is later available, selective international expansion is more attractive than casual-dating broadening because it preserves the same fundamental use case, even though re-validation would likely be necessary.`,
+          contentZH: `最穩健的建議，是先做選項一，但必須附加一個嚴格前提：維持預測系統的完整性。也就是說，先守住認真關係這個核心市場，再去考慮鄰接延伸或國際擴張。
+
+如果後續有第二步空間，那麼選擇性國際化通常比擴展到 casual dating 更吸引人，因為它至少保留了同一個基本 use case，雖然大概率仍需要重新驗證模型。`,
+        },
+      ],
+    },
+    {
+      id: "cold-call",
+      titleEN: "IX. Cold Call, Recitation, and Memory Triggers",
+      titleZH: "九、冷叫、課堂發言與記憶觸發",
+      icon: "messageSquare",
+      summaryEN: "Use short, precise, defensible language. Start with the prediction. Then explain the operating model built around it.",
+      summaryZH: "課堂發言要短、準、守得住。先講 prediction，再講圍繞它設計出的 operating model。",
+      subsections: [
+        {
+          label: "class-lens",
+          titleEN: "Best opening answer structure",
+          titleZH: "最佳開場答題結構",
+          contentEN: `A strong 30-second answer can follow this order:
+1. Define the use case: serious relationship search
+2. Define the prediction: likely long-term compatibility
+3. Explain the controlled operating model: questionnaire, algorithm, Guided Communication, screening
+4. State the strategic tension: scale versus model integrity`,
+          contentZH: `一個強而穩的 30 秒回答，可以照這個順序：
+1. 先定義 use case：尋找認真關係
+2. 再定義 prediction：長期相容性的可能性
+3. 接著說明受控營運模式：問卷、演算法、Guided Communication、篩選
+4. 最後點出策略張力：規模對模型完整性`,
+        },
+        {
+          label: "fact",
+          titleEN: "Numbers worth memorizing",
+          titleZH: "值得硬背的數字",
+          contentEN: `Memorize these for class:
+- 1998 founding, 2000 launch
+- 436 questions originally, later 258
+- 14 million+ questionnaires completed in the first seven years
+- ~230 employees, about half in customer service
+- ~20% applicant rejection
+- 4,000+ couples in validation work
+- 236 daily marriages in the 2007 Harris claim
+- Pricing at roughly 2x many competitors`,
+          contentZH: `這些數字值得直接背起來：
+- 1998 創立，2000 上線
+- 問卷最初 436 題，後來 258 題
+- 前七年超過 1,400 萬人完成問卷
+- 約 230 名員工，半數左右在客服
+- 約 20% 申請者被拒絕
+- 驗證研究超過 4,000 對伴侶
+- 2007 Harris 宣稱每日 236 對成婚
+- 定價約為許多競爭者的兩倍`,
+        },
+        {
+          label: "watch-out",
+          titleEN: "Common mistakes to avoid",
+          titleZH: "常見失誤",
+          contentEN: `Do not say:
+- “It is just a dating website.”
+- “Its advantage is only having more users.”
+- “The algorithm alone is the moat.”
+- “More scale is always better.”
+- “Option 2 is easy because dating is dating.”
+
+Instead, emphasize complementarity, fit, and the risk of degrading the core prediction system.`,
+          contentZH: `不要這樣說：
+- 「它就只是交友網站。」
+- 「它的優勢只是人比較多。」
+- 「演算法單獨就是護城河。」
+- 「規模越大一定越好。」
+- 「選項二很容易，因為交友都差不多。」
+
+應改強調互補性、適配性，以及破壞核心預測系統的風險。`,
+        },
+      ],
+    },
+  ],
 };
 
-export default function EHarmonyPrep() {
-  const [lang, setLang] = useState("both");
-  const [openSections, setOpenSections] = useState(new Set(data.sections.map(s => s.id)));
-  const [openSubs, setOpenSubs] = useState(new Set());
+function useMedia(query) {
+  const [matches, setMatches] = useState(false);
 
-  const toggleSection = (id) => {
-    setOpenSections(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const media = window.matchMedia(query);
+    const onChange = () => setMatches(media.matches);
+    onChange();
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, [query]);
+
+  return matches;
+}
+
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/\'/g, "&#039;");
+}
+
+function renderInline(text) {
+  return escapeHtml(text)
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/`([^`]+)`/g, "<code style=\"background:#F6F1E8;padding:1px 5px;border-radius:4px;font-size:.92em;\">$1</code>");
+}
+
+function MarkdownBlock({ text, color = palette.ink }) {
+  if (!text) return null;
+
+  const lines = text.split("\n");
+  return (
+    <div style={{ color }}>
+      {lines.map((line, index) => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          return <div key={index} style={{ height: 10 }} />;
+        }
+        if (/^-\s+/.test(trimmed)) {
+          return (
+            <div key={index} style={{ display: "flex", gap: 10, marginBottom: 6, alignItems: "flex-start" }}>
+              <span style={{ color: palette.red, lineHeight: 1.55 }}>•</span>
+              <div dangerouslySetInnerHTML={{ __html: renderInline(trimmed.replace(/^-\s+/, "")) }} />
+            </div>
+          );
+        }
+        if (/^\d+\.\s+/.test(trimmed)) {
+          const match = trimmed.match(/^(\d+)\.\s+(.*)$/);
+          return (
+            <div key={index} style={{ display: "flex", gap: 10, marginBottom: 6, alignItems: "flex-start" }}>
+              <span style={{ minWidth: 18, color: palette.redDeep, fontWeight: 700, lineHeight: 1.55 }}>{match?.[1]}.</span>
+              <div dangerouslySetInnerHTML={{ __html: renderInline(match?.[2] || "") }} />
+            </div>
+          );
+        }
+        return <div key={index} style={{ marginBottom: 6 }} dangerouslySetInnerHTML={{ __html: renderInline(trimmed) }} />;
+      })}
+    </div>
+  );
+}
+
+function Pill({ children, tone = "default" }) {
+  const toneMap = {
+    default: { bg: palette.bgSoft, border: palette.border, color: palette.navy },
+    red: { bg: palette.redSoft, border: "#F0C1CB", color: palette.redDeep },
+    green: { bg: palette.greenSoft, border: "#C5E5D8", color: palette.green },
+    amber: { bg: palette.amberSoft, border: "#E6D5A9", color: palette.amber },
+    blue: { bg: palette.blueSoft, border: "#C8D8EA", color: palette.navy },
   };
+  const active = toneMap[tone] || toneMap.default;
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "5px 10px",
+        borderRadius: 999,
+        background: active.bg,
+        border: `1px solid ${active.border}`,
+        color: active.color,
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: 0.2,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {children}
+    </span>
+  );
+}
 
-  const toggleSub = (key) => {
-    setOpenSubs(prev => {
-      const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
-      return next;
-    });
+function HeatCell({ value }) {
+  const map = {
+    "Very High": { bg: "#DFF2EA", color: palette.green },
+    High: { bg: "#EAF4EC", color: "#2D6A4F" },
+    Moderate: { bg: "#F7F0DF", color: palette.amber },
+    "Low–Moderate": { bg: "#F7EEDC", color: palette.amber },
+    Low: { bg: "#FBE7D8", color: "#B45309" },
+    "Very Low": { bg: "#FBE1E4", color: palette.redDeep },
+  };
+  const tone = map[value] || { bg: palette.bgSoft, color: palette.navy };
+  return (
+    <span style={{ display: "inline-block", minWidth: 86, textAlign: "center", padding: "6px 8px", borderRadius: 10, background: tone.bg, color: tone.color, fontWeight: 700, fontSize: 12 }}>
+      {value}
+    </span>
+  );
+}
+
+function SectionCard({ section, lang, isOpen, toggle, children }) {
+  return (
+    <section id={section.id} style={{ scrollMarginTop: 110, marginBottom: 18 }}>
+      <div style={{ border: `1px solid ${palette.borderStrong}`, borderRadius: 20, overflow: "hidden", background: palette.paper, boxShadow: palette.shadow }}>
+        <button
+          onClick={() => toggle(section.id)}
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 16,
+            border: "none",
+            background: isOpen ? `linear-gradient(135deg, ${palette.redDeep} 0%, ${palette.red} 100%)` : palette.paper,
+            color: isOpen ? "#fff" : palette.ink,
+            padding: "18px 20px",
+            cursor: "pointer",
+            textAlign: "left",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 14, minWidth: 0 }}>
+            <div style={{ width: 42, height: 42, borderRadius: 12, display: "grid", placeItems: "center", background: isOpen ? "rgba(255,255,255,0.14)" : palette.redSoft, color: isOpen ? "#fff" : palette.redDeep, flex: "0 0 auto" }}>
+              <Icon name={section.icon || "fileText"} size={20} color="currentColor" />
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 4 }}>
+                <div style={{ fontSize: 18, fontWeight: 800, lineHeight: 1.25 }}>
+                  {lang !== "zh" && section.titleEN}
+                  {lang === "both" && <div style={{ height: 2 }} />}
+                  {lang !== "en" && (
+                    <div style={{ fontSize: lang === "both" ? 14 : 18, opacity: lang === "both" ? 0.92 : 1, fontWeight: lang === "both" ? 700 : 800 }}>
+                      {section.titleZH}
+                    </div>
+                  )}
+                </div>
+                {section.tag && <Pill tone={isOpen ? "blue" : "red"}>{lang !== "zh" ? section.tag : section.tagZH}</Pill>}
+              </div>
+              <div style={{ fontSize: 13, lineHeight: 1.55, color: isOpen ? "rgba(255,255,255,0.88)" : palette.sub, maxWidth: 860 }}>
+                {lang !== "zh" && section.summaryEN}
+                {lang === "both" && <div style={{ height: 6 }} />}
+                {lang !== "en" && <div>{section.summaryZH}</div>}
+              </div>
+            </div>
+          </div>
+          <div style={{ flex: "0 0 auto", color: isOpen ? "#fff" : palette.redDeep }}>
+            <Icon name={isOpen ? "chevronDown" : "chevronRight"} size={22} color="currentColor" />
+          </div>
+        </button>
+        {isOpen && <div style={{ padding: "14px 14px 16px" }}>{children}</div>}
+      </div>
+    </section>
+  );
+}
+
+function SubsectionCard({ sub, lang, isOpen, onToggle }) {
+  const tone =
+    sub.label === "fact"
+      ? { pill: "green", text: "FACT", textZH: "事實" }
+      : sub.label === "inference"
+        ? { pill: "amber", text: "INFERENCE", textZH: "推論" }
+        : sub.label === "watch-out"
+          ? { pill: "red", text: "WATCH OUT", textZH: "注意" }
+          : { pill: "blue", text: "CLASS LENS", textZH: "課程視角" };
+
+  return (
+    <div style={{ border: `1px solid ${palette.border}`, borderRadius: 16, overflow: "hidden", background: palette.bgSoft, marginBottom: 10 }}>
+      <button
+        onClick={onToggle}
+        style={{
+          width: "100%",
+          border: "none",
+          background: isOpen ? "#FFF8F0" : palette.bgSoft,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          padding: "14px 16px",
+          cursor: "pointer",
+          textAlign: "left",
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 4 }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: palette.navy, lineHeight: 1.3 }}>
+              {lang !== "zh" && sub.titleEN}
+              {lang === "both" && " / "}
+              {lang !== "en" && sub.titleZH}
+            </div>
+            <Pill tone={tone.pill}>{lang !== "zh" ? tone.text : tone.textZH}</Pill>
+          </div>
+        </div>
+        <Icon name={isOpen ? "chevronDown" : "chevronRight"} size={18} color={palette.redDeep} />
+      </button>
+      {isOpen && (
+        <div style={{ padding: "0 16px 16px", fontSize: 14, lineHeight: 1.68, overflowWrap: "anywhere" }}>
+          {lang !== "zh" && <MarkdownBlock text={sub.contentEN} color={palette.ink} />}
+          {lang === "both" && <div style={{ margin: "12px 0", borderTop: `1px dashed ${palette.borderStrong}` }} />}
+          {lang !== "en" && <MarkdownBlock text={sub.contentZH} color={lang === "both" ? palette.sub : palette.ink} />}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SummaryTiles({ lang }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12 }}>
+      {studyData.quickStats.map((item) => (
+        <div key={item.labelEN} style={{ background: palette.paper, border: `1px solid ${palette.border}`, borderRadius: 18, padding: 16, boxShadow: palette.shadow }}>
+          <div style={{ width: 36, height: 36, borderRadius: 12, background: palette.redSoft, color: palette.redDeep, display: "grid", placeItems: "center", marginBottom: 10 }}>
+            <Icon name={item.icon === "heart" ? "checkCircle" : item.icon} size={18} color="currentColor" />
+          </div>
+          <div style={{ fontSize: 26, fontWeight: 900, color: palette.navy, lineHeight: 1 }}>{item.value}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: palette.ink, marginTop: 8 }}>{lang !== "zh" ? item.labelEN : item.labelZH}</div>
+          <div style={{ fontSize: 12, color: palette.sub, marginTop: 4 }}>{lang !== "zh" ? item.noteEN : item.noteZH}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PrecisionGrid({ lang }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 12 }}>
+      {studyData.precisionChecks.map((item) => (
+        <div key={item.titleEN} style={{ background: palette.paper, border: `1px solid ${palette.border}`, borderRadius: 16, padding: 14, boxShadow: palette.shadow }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: item.level === "must-fix" ? palette.redSoft : palette.amberSoft, color: item.level === "must-fix" ? palette.redDeep : palette.amber, display: "grid", placeItems: "center" }}>
+              <Icon name={item.level === "must-fix" ? "alertTriangle" : "eye"} size={18} color="currentColor" />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: palette.navy }}>{lang !== "zh" ? item.titleEN : item.titleZH}</div>
+              <div style={{ marginTop: 4 }}>
+                <Pill tone={item.level === "must-fix" ? "red" : "amber"}>{item.level === "must-fix" ? (lang !== "zh" ? "PRECISION FIX" : "精準修正") : lang !== "zh" ? "WORDING WATCH" : "措辭注意"}</Pill>
+              </div>
+            </div>
+          </div>
+          <div style={{ fontSize: 13, lineHeight: 1.6, color: palette.ink }}>{lang !== "zh" ? item.bodyEN : item.bodyZH}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Timeline({ lang }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 12 }}>
+      {studyData.timeline.map((item) => (
+        <div key={item.year} style={{ position: "relative", background: palette.paper, border: `1px solid ${palette.border}`, borderRadius: 18, padding: 16, boxShadow: palette.shadow }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
+            <div style={{ fontSize: 22, fontWeight: 900, color: palette.redDeep }}>{item.year}</div>
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: palette.redSoft, color: palette.redDeep, display: "grid", placeItems: "center" }}>
+              <Icon name={item.icon} size={18} color="currentColor" />
+            </div>
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 800, color: palette.navy, marginBottom: 6 }}>{lang !== "zh" ? item.titleEN : item.titleZH}</div>
+          <div style={{ fontSize: 13, lineHeight: 1.6, color: palette.ink }}>{lang !== "zh" ? item.bodyEN : item.bodyZH}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function StudyMap({ lang }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14 }}>
+      {studyData.studyMaps.map((item) => (
+        <div key={item.titleEN} style={{ background: palette.paper, border: `1px solid ${palette.border}`, borderRadius: 18, padding: 16, boxShadow: palette.shadow }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 12, background: palette.blueSoft, color: palette.navy, display: "grid", placeItems: "center" }}>
+              <Icon name={item.icon} size={18} color="currentColor" />
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: palette.navy }}>{lang !== "zh" ? item.titleEN : item.titleZH}</div>
+          </div>
+          {(lang !== "zh" ? item.bulletsEN : item.bulletsZH).map((bullet) => (
+            <div key={bullet} style={{ display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 8 }}>
+              <span style={{ color: palette.red, lineHeight: 1.5 }}>•</span>
+              <div style={{ fontSize: 13, lineHeight: 1.6, color: palette.ink }}>{bullet}</div>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FlowStrip({ lang }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+      {studyData.flow.map((step, index) => (
+        <div key={step.titleEN} style={{ background: palette.paper, border: `1px solid ${palette.border}`, borderRadius: 18, padding: 16, position: "relative", boxShadow: palette.shadow }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 12, background: palette.redSoft, color: palette.redDeep, display: "grid", placeItems: "center" }}>
+              <Icon name={step.icon} size={18} color="currentColor" />
+            </div>
+            <Pill tone="red">{index + 1}</Pill>
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 800, color: palette.navy, marginBottom: 6 }}>{lang !== "zh" ? step.titleEN : step.titleZH}</div>
+          <div style={{ fontSize: 13, lineHeight: 1.6, color: palette.ink }}>{lang !== "zh" ? step.bodyEN : step.bodyZH}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ValueCurveTable({ lang }) {
+  return (
+    <div style={{ background: palette.paper, border: `1px solid ${palette.border}`, borderRadius: 18, padding: 12, overflowX: "auto", boxShadow: palette.shadow }}>
+      <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 780 }}>
+        <thead>
+          <tr>
+            {[
+              lang !== "zh" ? "Dimension of Value" : "價值維度",
+              "eHarmony",
+              "Chemistry / Match",
+              lang !== "zh" ? "Free Sites" : "免費網站",
+              lang !== "zh" ? "Social Networks" : "社群網路",
+            ].map((head, idx) => (
+              <th key={head} style={{ textAlign: idx === 0 ? "left" : "center", fontSize: 12, letterSpacing: 0.2, padding: "12px 10px", color: palette.sub, borderBottom: `1px solid ${palette.border}` }}>
+                {head}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {studyData.valueCurve.map((row, idx) => (
+            <tr key={row.dimensionEN}>
+              <td style={{ padding: "12px 10px", borderBottom: idx === studyData.valueCurve.length - 1 ? "none" : `1px solid ${palette.border}`, fontWeight: 700, color: palette.navy, fontSize: 13, verticalAlign: "top" }}>
+                {lang !== "zh" ? row.dimensionEN : row.dimensionZH}
+              </td>
+              <td style={{ padding: "12px 10px", textAlign: "center", borderBottom: idx === studyData.valueCurve.length - 1 ? "none" : `1px solid ${palette.border}` }}><HeatCell value={row.eharmony} /></td>
+              <td style={{ padding: "12px 10px", textAlign: "center", borderBottom: idx === studyData.valueCurve.length - 1 ? "none" : `1px solid ${palette.border}` }}><HeatCell value={row.chemistry} /></td>
+              <td style={{ padding: "12px 10px", textAlign: "center", borderBottom: idx === studyData.valueCurve.length - 1 ? "none" : `1px solid ${palette.border}` }}><HeatCell value={row.free} /></td>
+              <td style={{ padding: "12px 10px", textAlign: "center", borderBottom: idx === studyData.valueCurve.length - 1 ? "none" : `1px solid ${palette.border}` }}><HeatCell value={row.social} /></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function OptionMatrix({ lang }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 12 }}>
+      {studyData.optionMatrix.map((item) => (
+        <div key={item.optionEN} style={{ background: palette.paper, border: `1px solid ${palette.border}`, borderRadius: 18, padding: 16, boxShadow: palette.shadow }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 10 }}>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 900, color: palette.redDeep, textTransform: "uppercase", letterSpacing: 0.3 }}>{lang !== "zh" ? item.optionEN : item.optionZH}</div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: palette.navy, marginTop: 4 }}>{lang !== "zh" ? item.titleEN : item.titleZH}</div>
+            </div>
+            <Pill tone={item.tag === "Most Defensible" ? "green" : item.tag === "Model Drift Risk" ? "red" : "amber"}>{lang !== "zh" ? item.tag : item.tag === "Most Defensible" ? "最穩健" : item.tag === "Model Drift Risk" ? "模型漂移風險" : item.tag === "Adjacency" ? "鄰接延伸" : "第二步"}</Pill>
+          </div>
+          <div style={{ fontSize: 13, lineHeight: 1.6, color: palette.ink, marginBottom: 12 }}>{lang !== "zh" ? item.fitEN : item.fitZH}</div>
+          <div style={{ borderTop: `1px dashed ${palette.borderStrong}`, paddingTop: 10, fontSize: 12.5, lineHeight: 1.6, color: palette.sub }}>
+            <strong style={{ color: palette.navy }}>{lang !== "zh" ? "Risk: " : "風險："}</strong>
+            {lang !== "zh" ? item.riskEN : item.riskZH}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ExhibitGrid({ lang }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+      {studyData.exhibits.map((item) => (
+        <div key={item.num} style={{ background: palette.paper, border: `1px solid ${palette.border}`, borderRadius: 16, padding: 14, boxShadow: palette.shadow }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <Pill tone="blue">{lang !== "zh" ? `Exhibit ${item.num}` : `附錄 ${item.num}`}</Pill>
+            <Icon name="fileText" size={18} color={palette.redDeep} />
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 800, color: palette.navy, marginBottom: 6 }}>{lang !== "zh" ? item.titleEN : item.titleZH}</div>
+          <div style={{ fontSize: 12.5, lineHeight: 1.6, color: palette.sub }}>{lang !== "zh" ? item.noteEN : item.noteZH}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ColdCallCards({ lang }) {
+  const [openCard, setOpenCard] = useState(0);
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 12 }}>
+      {studyData.coldCalls.map((item, index) => {
+        const active = openCard === index;
+        return (
+          <div key={item.qEN} style={{ background: palette.paper, border: `1px solid ${palette.border}`, borderRadius: 18, overflow: "hidden", boxShadow: palette.shadow }}>
+            <button onClick={() => setOpenCard(active ? -1 : index)} style={{ width: "100%", border: "none", background: active ? palette.redSoft : palette.paper, padding: 16, textAlign: "left", cursor: "pointer" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: palette.navy }}>{lang !== "zh" ? item.qEN : item.qZH}</div>
+                <Icon name={active ? "chevronDown" : "chevronRight"} size={18} color={palette.redDeep} />
+              </div>
+            </button>
+            {active && <div style={{ padding: "0 16px 16px", fontSize: 13, lineHeight: 1.65, color: palette.ink }}>{lang !== "zh" ? item.aEN : item.aZH}</div>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function NavRail({ sections, lang, activeId, onJump, search, setSearch, dense, setDense, filterTag, setFilterTag, expandAll, collapseAll, openSections }) {
+  return (
+    <aside style={{ position: "sticky", top: 92, alignSelf: "start" }}>
+      <div style={{ background: palette.paper, border: `1px solid ${palette.borderStrong}`, borderRadius: 20, boxShadow: palette.shadow, overflow: "hidden" }}>
+        <div style={{ padding: 16, borderBottom: `1px solid ${palette.border}` }}>
+          <div style={{ fontSize: 12, color: palette.sub, fontWeight: 800, letterSpacing: 0.3, textTransform: "uppercase", marginBottom: 8 }}>
+            {lang !== "zh" ? "Study Navigator" : "學習導航"}
+          </div>
+          <div style={{ position: "relative" }}>
+            <Icon name="search" size={16} color={palette.muted} style={{ position: "absolute", left: 10, top: 10 }} />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={lang !== "zh" ? "Search titles or content" : "搜尋標題或內容"}
+              style={{ width: "100%", boxSizing: "border-box", border: `1px solid ${palette.borderStrong}`, borderRadius: 12, padding: "9px 10px 9px 34px", background: palette.bgSoft, color: palette.ink, fontSize: 13, outline: "none" }}
+            />
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+            {[
+              { key: "all", labelEN: "All", labelZH: "全部" },
+              { key: "fact", labelEN: "Facts", labelZH: "事實" },
+              { key: "inference", labelEN: "Inference", labelZH: "推論" },
+              { key: "class-lens", labelEN: "Class Lens", labelZH: "課程視角" },
+            ].map((item) => (
+              <button
+                key={item.key}
+                onClick={() => setFilterTag(item.key)}
+                style={{ border: `1px solid ${filterTag === item.key ? palette.redDeep : palette.borderStrong}`, background: filterTag === item.key ? palette.redSoft : palette.bgSoft, color: filterTag === item.key ? palette.redDeep : palette.navy, borderRadius: 999, padding: "6px 9px", fontSize: 11, fontWeight: 800, cursor: "pointer" }}
+              >
+                {lang !== "zh" ? item.labelEN : item.labelZH}
+              </button>
+            ))}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10 }}>
+            <button onClick={expandAll} style={{ border: `1px solid ${palette.borderStrong}`, background: palette.bgSoft, color: palette.navy, borderRadius: 12, padding: "8px 10px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>{lang !== "zh" ? "Expand all" : "全部展開"}</button>
+            <button onClick={collapseAll} style={{ border: `1px solid ${palette.borderStrong}`, background: palette.bgSoft, color: palette.navy, borderRadius: 12, padding: "8px 10px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>{lang !== "zh" ? "Collapse all" : "全部收合"}</button>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10, paddingTop: 10, borderTop: `1px dashed ${palette.border}` }}>
+            <div style={{ fontSize: 12, color: palette.sub, fontWeight: 700 }}>{lang !== "zh" ? "Reading density" : "閱讀密度"}</div>
+            <button onClick={() => setDense(!dense)} style={{ border: `1px solid ${palette.borderStrong}`, background: dense ? palette.redSoft : palette.bgSoft, color: dense ? palette.redDeep : palette.navy, borderRadius: 999, padding: "6px 10px", fontSize: 11, fontWeight: 800, cursor: "pointer" }}>{dense ? (lang !== "zh" ? "Dense" : "緊湊") : lang !== "zh" ? "Comfort" : "舒適"}</button>
+          </div>
+        </div>
+        <div style={{ padding: 10, maxHeight: "calc(100vh - 220px)", overflow: "auto" }}>
+          {sections.map((section) => {
+            const active = activeId === section.id;
+            return (
+              <button
+                key={section.id}
+                onClick={() => onJump(section.id)}
+                style={{ width: "100%", border: "none", background: active ? palette.redSoft : "transparent", color: active ? palette.redDeep : palette.ink, borderRadius: 14, padding: "10px 12px", display: "flex", justifyContent: "space-between", gap: 10, textAlign: "left", cursor: "pointer", marginBottom: 4, alignItems: "center" }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 800, lineHeight: 1.35 }}>{lang !== "zh" ? section.titleEN : section.titleZH}</div>
+                </div>
+                <div style={{ color: openSections.has(section.id) ? palette.green : palette.muted }}>
+                  <Icon name={openSections.has(section.id) ? "checkCircle" : "chevronRight"} size={16} color="currentColor" />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+export default function EHarmonyPrepUltra() {
+  const [lang, setLang] = useState("both");
+  const [dense, setDense] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterTag, setFilterTag] = useState("all");
+  const isMobile = useMedia("(max-width: 980px)");
+  const [openSections, setOpenSections] = useState(new Set(studyData.sections.map((section) => section.id)));
+  const [openSubs, setOpenSubs] = useState(() => {
+    const next = new Set();
+    studyData.sections.forEach((section) => section.subsections.forEach((_, index) => next.add(`${section.id}-${index}`)));
+    return next;
+  });
+  const [activeId, setActiveId] = useState(studyData.sections[0].id);
+
+  const normalizedQuery = search.trim().toLowerCase();
+
+  const filteredSections = useMemo(() => {
+    return studyData.sections
+      .map((section) => {
+        const filteredSubs = section.subsections
+          .map((sub, originalIndex) => ({ ...sub, originalIndex }))
+          .filter((sub) => {
+            const tagPass = filterTag === "all" ? true : sub.label === filterTag;
+            if (!tagPass) return false;
+            if (!normalizedQuery) return true;
+            const haystack = [sub.titleEN, sub.titleZH, sub.contentEN, sub.contentZH, section.titleEN, section.titleZH].join(" ").toLowerCase();
+            return haystack.includes(normalizedQuery);
+          });
+        const fallbackSubs = section.subsections
+          .map((sub, originalIndex) => ({ ...sub, originalIndex }))
+          .filter((sub) => (filterTag === "all" ? true : sub.label === filterTag));
+        const sectionPass = filteredSubs.length > 0 || (!normalizedQuery && filterTag === "all");
+        return sectionPass ? { ...section, subsections: filteredSubs.length ? filteredSubs : fallbackSubs } : null;
+      })
+      .filter(Boolean);
+  }, [normalizedQuery, filterTag]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const handler = () => {
+      let current = activeId;
+      studyData.sections.forEach((section) => {
+        const el = document.getElementById(section.id);
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        if (rect.top <= 140) current = section.id;
+      });
+      setActiveId(current);
+    };
+    window.addEventListener("scroll", handler, { passive: true });
+    handler();
+    return () => window.removeEventListener("scroll", handler);
+  }, [activeId]);
+
+  const jumpTo = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   };
 
   const expandAll = () => {
-    setOpenSections(new Set(data.sections.map(s => s.id)));
-    const allSubs = new Set();
-    data.sections.forEach(s => s.subsections.forEach((_, i) => allSubs.add(`${s.id}-${i}`)));
-    setOpenSubs(allSubs);
+    setOpenSections(new Set(studyData.sections.map((section) => section.id)));
+    const next = new Set();
+    studyData.sections.forEach((section) => section.subsections.forEach((_, index) => next.add(`${section.id}-${index}`)));
+    setOpenSubs(next);
   };
 
   const collapseAll = () => {
@@ -778,152 +1631,192 @@ export default function EHarmonyPrep() {
     setOpenSubs(new Set());
   };
 
-  const renderMarkdown = (text) => {
-    if (!text) return null;
-    return text.split("\n").map((line, i) => {
-      let processed = line;
-      // Bold
-      processed = processed.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-      // Check if it's a list item
-      const isBullet = processed.match(/^- /);
-      const isNumbered = processed.match(/^\d+\. /);
-      if (isBullet) {
-        processed = processed.replace(/^- /, '');
-        return <div key={i} style={{ paddingLeft: 20, position: 'relative', marginBottom: 4 }}>
-          <span style={{ position: 'absolute', left: 4 }}>•</span>
-          <span dangerouslySetInnerHTML={{ __html: processed }} />
-        </div>;
-      }
-      if (isNumbered) {
-        const match = processed.match(/^(\d+)\. (.*)$/);
-        if (match) {
-          return <div key={i} style={{ paddingLeft: 28, position: 'relative', marginBottom: 4 }}>
-            <span style={{ position: 'absolute', left: 4 }}>{match[1]}.</span>
-            <span dangerouslySetInnerHTML={{ __html: match[2] }} />
-          </div>;
-        }
-      }
-      if (processed.trim() === '') return <div key={i} style={{ height: 8 }} />;
-      return <div key={i} style={{ marginBottom: 4 }} dangerouslySetInnerHTML={{ __html: processed }} />;
+  const toggleSection = (id) => {
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
     });
   };
 
+  const toggleSub = (key) => {
+    setOpenSubs((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const pagePadding = isMobile ? "14px 14px 28px" : "20px 22px 32px";
+
   return (
-    <div style={{ fontFamily: "'Segoe UI', 'Noto Sans TC', Arial, sans-serif", maxWidth: 960, margin: '0 auto', padding: '16px 20px', color: '#1a1a1a', lineHeight: 1.65 }}>
-      {/* Header */}
-      <div style={{ borderBottom: '3px solid #1a365d', paddingBottom: 12, marginBottom: 16 }}>
-        <div style={{ fontSize: 13, color: '#666', fontWeight: 500, letterSpacing: 0.5 }}>
-          MODULE II: DESIGNING A PREDICTION FACTORY — FOUNDATIONS
-        </div>
-        <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
-          模組二：將預測工廠設計入營運模式 — 基礎篇
-        </div>
-        <h1 style={{ fontSize: 24, margin: '8px 0 4px', color: '#1a365d' }}>
-          eHarmony Case Preparation Notes
-        </h1>
-        <div style={{ fontSize: 14, color: '#444' }}>
-          eHarmony 案例準備筆記 &nbsp;|&nbsp; "Weak" AI/ML & Building Algorithms
-        </div>
-        <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>
-          Prof. Kevin Boudreau &nbsp;|&nbsp; Northeastern University &nbsp;|&nbsp; HBS Case 9-709-424
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ display: 'flex', gap: 2, background: '#f0f0f0', borderRadius: 6, padding: 2 }}>
-          {[
-            { key: 'en', label: 'EN' },
-            { key: 'zh', label: '中文' },
-            { key: 'both', label: 'Both 雙語' }
-          ].map(opt => (
-            <button key={opt.key} onClick={() => setLang(opt.key)}
-              style={{ padding: '5px 14px', border: 'none', borderRadius: 4, fontSize: 12, fontWeight: 600,
-                background: lang === opt.key ? '#1a365d' : 'transparent',
-                color: lang === opt.key ? '#fff' : '#555', cursor: 'pointer' }}>
-              {opt.label}
-            </button>
-          ))}
-        </div>
-        <button onClick={expandAll} style={{ padding: '5px 12px', border: '1px solid #ccc', borderRadius: 4, fontSize: 11, cursor: 'pointer', background: '#fff' }}>
-          Expand All 全展開
-        </button>
-        <button onClick={collapseAll} style={{ padding: '5px 12px', border: '1px solid #ccc', borderRadius: 4, fontSize: 11, cursor: 'pointer', background: '#fff' }}>
-          Collapse All 全收合
-        </button>
-      </div>
-
-      {/* Sections */}
-      {data.sections.map(section => (
-        <div key={section.id} style={{ marginBottom: 12, border: '1px solid #ddd', borderRadius: 8, overflow: 'hidden' }}>
-          <div
-            onClick={() => toggleSection(section.id)}
-            style={{ padding: '10px 16px', background: openSections.has(section.id) ? '#1a365d' : '#f7f7f7',
-              color: openSections.has(section.id) ? '#fff' : '#1a1a1a', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 700 }}>
-                {lang !== 'zh' && section.titleEN}
-                {lang === 'both' && <br />}
-                {lang !== 'en' && <span style={{ fontSize: lang === 'both' ? 13 : 15, opacity: lang === 'both' ? 0.85 : 1 }}>{section.titleZH}</span>}
-              </div>
-              {section.tag && (
-                <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 3, marginTop: 4, display: 'inline-block',
-                  background: openSections.has(section.id) ? 'rgba(255,255,255,0.2)' : '#e6f0ff', color: openSections.has(section.id) ? '#fff' : '#1a365d', fontWeight: 600 }}>
-                  {lang !== 'zh' ? section.tag : section.tagZH}
-                </span>
-              )}
-            </div>
-            <span style={{ fontSize: 18, fontWeight: 300 }}>{openSections.has(section.id) ? '−' : '+'}</span>
+    <div style={{ background: palette.bg, minHeight: "100vh", color: palette.ink, fontFamily: "Inter, 'Segoe UI', 'Noto Sans TC', Arial, sans-serif" }}>
+      <div style={{ position: "sticky", top: 0, zIndex: 30, backdropFilter: "blur(10px)", background: "rgba(245, 239, 229, 0.88)", borderBottom: `1px solid ${palette.borderStrong}` }}>
+        <div style={{ maxWidth: 1440, margin: "0 auto", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 11, letterSpacing: 0.35, textTransform: "uppercase", fontWeight: 800, color: palette.redDeep }}>{studyData.meta.moduleEN}</div>
+            <div style={{ fontSize: 12, color: palette.sub, marginTop: 2 }}>{studyData.meta.moduleZH}</div>
           </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            {[{ key: "en", label: "EN" }, { key: "zh", label: "中文" }, { key: "both", label: "Both 雙語" }].map((item) => (
+              <button
+                key={item.key}
+                onClick={() => setLang(item.key)}
+                style={{ border: `1px solid ${lang === item.key ? palette.redDeep : palette.borderStrong}`, background: lang === item.key ? palette.redDeep : palette.paper, color: lang === item.key ? "#fff" : palette.navy, borderRadius: 999, padding: "7px 12px", fontSize: 12, fontWeight: 800, cursor: "pointer" }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
 
-          {openSections.has(section.id) && (
-            <div style={{ padding: '8px 12px' }}>
-              {section.subsections.map((sub, idx) => {
-                const subKey = `${section.id}-${idx}`;
-                const isOpen = openSubs.has(subKey);
-                return (
-                  <div key={idx} style={{ marginBottom: 6, border: '1px solid #eee', borderRadius: 6 }}>
-                    <div
-                      onClick={() => toggleSub(subKey)}
-                      style={{ padding: '8px 14px', background: isOpen ? '#f0f5ff' : '#fafafa', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: isOpen ? '6px 6px 0 0' : 6 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#2a4a7f' }}>
-                        {lang !== 'zh' && sub.titleEN}
-                        {lang === 'both' && ' / '}
-                        {lang !== 'en' && sub.titleZH}
-                      </div>
-                      <span style={{ fontSize: 14, color: '#999' }}>{isOpen ? '▾' : '▸'}</span>
-                    </div>
-                    {isOpen && (
-                      <div style={{ padding: '10px 16px', fontSize: 13 }}>
-                        {lang !== 'zh' && (
-                          <div style={{ marginBottom: lang === 'both' ? 16 : 0 }}>
-                            {renderMarkdown(sub.contentEN)}
-                          </div>
-                        )}
-                        {lang === 'both' && <hr style={{ border: 'none', borderTop: '1px dashed #ddd', margin: '12px 0' }} />}
-                        {lang !== 'en' && (
-                          <div style={{ color: lang === 'both' ? '#444' : '#1a1a1a' }}>
-                            {renderMarkdown(sub.contentZH)}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+      <div style={{ maxWidth: 1440, margin: "0 auto", padding: pagePadding }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "320px minmax(0, 1fr)", gap: 18, alignItems: "start" }}>
+          {!isMobile && (
+            <NavRail
+              sections={filteredSections}
+              lang={lang}
+              activeId={activeId}
+              onJump={jumpTo}
+              search={search}
+              setSearch={setSearch}
+              dense={dense}
+              setDense={setDense}
+              filterTag={filterTag}
+              setFilterTag={setFilterTag}
+              expandAll={expandAll}
+              collapseAll={collapseAll}
+              openSections={openSections}
+            />
           )}
-        </div>
-      ))}
 
-      {/* Footer */}
-      <div style={{ marginTop: 20, padding: '12px 16px', background: '#f9f9f9', borderRadius: 6, fontSize: 11, color: '#888', borderLeft: '3px solid #1a365d' }}>
-        <div style={{ fontWeight: 600, marginBottom: 4, color: '#555' }}>
-          TAGGING LEGEND 標籤說明
+          <main style={{ minWidth: 0 }}>
+            <div style={{ background: `linear-gradient(135deg, ${palette.paper} 0%, #FFF7F0 70%, #FBE7EA 100%)`, border: `1px solid ${palette.borderStrong}`, borderRadius: 26, padding: isMobile ? 18 : 24, boxShadow: palette.shadow, marginBottom: 18 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: palette.redSoft, border: "1px solid #F0C1CB", borderRadius: 999, padding: "7px 12px", color: palette.redDeep, fontSize: 12, fontWeight: 800, marginBottom: 12 }}>
+                    <Icon name="badge" size={16} color="currentColor" />
+                    Northeastern-style study interface
+                  </div>
+                  <h1 style={{ margin: 0, fontSize: isMobile ? 26 : 34, lineHeight: 1.12, color: palette.navy }}>{lang !== "zh" ? "eHarmony Case Master Prep" : "eHarmony 案例主題式總複習"}</h1>
+                  <div style={{ marginTop: 8, fontSize: 14, color: palette.sub, maxWidth: 920 }}>
+                    {lang !== "zh" ? studyData.meta.subtitleEN : studyData.meta.subtitleZH}
+                  </div>
+                  <div style={{ marginTop: 6, fontSize: 12.5, color: palette.muted }}>{studyData.meta.courseLine}</div>
+                </div>
+                <div style={{ display: "grid", gap: 8, minWidth: isMobile ? "100%" : 250 }}>
+                  <div style={{ background: palette.paper, border: `1px solid ${palette.border}`, borderRadius: 16, padding: 12 }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: palette.sub, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.25 }}>{lang !== "zh" ? "Study default" : "預設閱讀模式"}</div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <Pill tone="green">{lang !== "zh" ? "Fact first" : "先看事實"}</Pill>
+                      <Pill tone="amber">{lang !== "zh" ? "Inference tagged" : "推論標示"}</Pill>
+                      <Pill tone="blue">{lang !== "zh" ? "Class lens separate" : "課程鏡頭分開"}</Pill>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginTop: 18 }}>
+                {[(lang !== "zh" ? studyData.hero.takeawaysEN : studyData.hero.takeawaysZH)].flat().map((item, idx) => (
+                  <div key={idx} style={{ background: palette.paper, border: `1px solid ${palette.border}`, borderRadius: 18, padding: 14, boxShadow: palette.shadow, display: "flex", gap: 10, alignItems: "flex-start" }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 10, background: palette.redSoft, color: palette.redDeep, display: "grid", placeItems: "center", flex: "0 0 auto" }}>
+                      <Icon name={idx === 0 ? "target" : idx === 1 ? "layers" : "scale"} size={16} color="currentColor" />
+                    </div>
+                    <div style={{ fontSize: 13.5, lineHeight: 1.6, color: palette.ink }}>{item}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {isMobile && (
+              <div style={{ marginBottom: 18 }}>
+                <NavRail
+                  sections={filteredSections}
+                  lang={lang}
+                  activeId={activeId}
+                  onJump={jumpTo}
+                  search={search}
+                  setSearch={setSearch}
+                  dense={dense}
+                  setDense={setDense}
+                  filterTag={filterTag}
+                  setFilterTag={setFilterTag}
+                  expandAll={expandAll}
+                  collapseAll={collapseAll}
+                  openSections={openSections}
+                />
+              </div>
+            )}
+
+            <div style={{ marginBottom: 18 }}>
+              <SummaryTiles lang={lang} />
+            </div>
+
+            <div style={{ marginBottom: 18 }}>
+              <PrecisionGrid lang={lang} />
+            </div>
+
+            <div style={{ marginBottom: 18 }}>
+              <Timeline lang={lang} />
+            </div>
+
+            <div style={{ marginBottom: 18 }}>
+              <StudyMap lang={lang} />
+            </div>
+
+            <div style={{ marginBottom: 18 }}>
+              <FlowStrip lang={lang} />
+            </div>
+
+            <div style={{ marginBottom: 18 }}>
+              <ValueCurveTable lang={lang} />
+            </div>
+
+            <div style={{ marginBottom: 18 }}>
+              <OptionMatrix lang={lang} />
+            </div>
+
+            <div style={{ marginBottom: 18 }}>
+              <ExhibitGrid lang={lang} />
+            </div>
+
+            <div style={{ marginBottom: 18 }}>
+              <ColdCallCards lang={lang} />
+            </div>
+
+            {filteredSections.map((section) => {
+              const isOpen = openSections.has(section.id);
+              return (
+                <SectionCard key={section.id} section={section} lang={lang} isOpen={isOpen} toggle={toggleSection}>
+                  {section.subsections.map((sub, index) => {
+                    const stableIndex = typeof sub.originalIndex === "number" ? sub.originalIndex : index;
+                    const key = `${section.id}-${stableIndex}`;
+                    const isSubOpen = openSubs.has(key);
+                    return <SubsectionCard key={key} sub={sub} lang={lang} isOpen={isSubOpen} onToggle={() => toggleSub(key)} />;
+                  })}
+                </SectionCard>
+              );
+            })}
+
+            <div style={{ marginTop: 20, background: palette.paper, border: `1px solid ${palette.borderStrong}`, borderRadius: 20, padding: 16, boxShadow: palette.shadow }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: palette.sub, textTransform: "uppercase", letterSpacing: 0.3, marginBottom: 10 }}>{lang !== "zh" ? "Legend" : "標籤說明"}</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+                <Pill tone="green">{lang !== "zh" ? "FACT" : "事實"}</Pill>
+                <Pill tone="amber">{lang !== "zh" ? "INFERENCE" : "推論"}</Pill>
+                <Pill tone="blue">{lang !== "zh" ? "CLASS LENS" : "課程視角"}</Pill>
+                <Pill tone="red">{lang !== "zh" ? "WATCH OUT" : "注意"}</Pill>
+              </div>
+              <div style={{ fontSize: 13, lineHeight: dense ? 1.48 : 1.66, color: palette.ink }}>
+                {lang !== "zh"
+                  ? "Facts are grounded in the case and course materials. Inferences extend those facts analytically. Class Lens sections apply Kevin Boudreau’s platform and operating-model frameworks. This interface is designed for student study use: dense enough to prepare, structured enough to skim, and visually segmented so the reader can move from overview to detail without losing the logic of the case."
+                  : "事實內容以案例與課程材料為基礎。推論則是在事實之上做出的分析延伸。Class Lens 區塊是把 Kevin Boudreau 的平台與營運模式框架套用到本案。此介面是以學生端學習為中心設計：內容密度足以備課，結構又足夠清晰，讓讀者能從總覽一路滑到細節而不失去案例主線。"}
+              </div>
+            </div>
+          </main>
         </div>
-        <div><strong>[FACT]</strong> — Directly from case text 直接引自案例文本</div>
-        <div><strong>[INFERENCE]</strong> — Analytical extension from case facts 由案例事實延伸的分析推論</div>
-        <div><strong>[CLASS LENS]</strong> — Application of Boudreau's course frameworks 應用 Boudreau 教授的課程框架</div>
       </div>
     </div>
   );

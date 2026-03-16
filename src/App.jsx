@@ -1,607 +1,930 @@
 import { useState } from "react";
 
-/* ═══ SHARED UI ═══ */
-const tabs = ["Overview","Five Levels","SPARK & Position","Industry","Meso/Cluster","Macro & Meta","Q2: VRIO/ARK","Q3: ETA/Swatch","Cram Sheet"];
+const data = {
+  sections: [
+    {
+      id: "overview",
+      titleEN: "I. Case Overview & Context",
+      titleZH: "一、案例概覽與背景",
+      subsections: [
+        {
+          titleEN: "Case Setting",
+          titleZH: "案例情境",
+          contentEN: `**Date:** October 2007. CEO Greg Waldorf and President/COO Greg Steiner driving on I-10 Freeway after a day-long strategy meeting.
 
-const SectionTitle = ({ children, cn }) => (<div className="mb-4"><h2 className="text-xl font-bold text-slate-800 border-b-2 border-blue-600 pb-2">{children}</h2>{cn && <p className="text-sm text-slate-500 mt-1">{cn}</p>}</div>);
+**Core Decision:** Which of four strategic options to pursue in response to intensifying competition from Match (Chemistry), Yahoo! Personals, free sites (Plenty of Fish, OKCupid), and social networks (MySpace, Facebook).
 
-const Card = ({ title, cn, children, color = "blue" }) => {
-  const colors = { blue:"border-blue-500 bg-blue-50", green:"border-green-500 bg-green-50", amber:"border-amber-500 bg-amber-50", red:"border-red-500 bg-red-50", purple:"border-purple-500 bg-purple-50", slate:"border-slate-400 bg-slate-50", rose:"border-rose-500 bg-rose-50", cyan:"border-cyan-500 bg-cyan-50" };
-  return (<div className={`border-l-4 ${colors[color]} p-4 rounded-r-lg mb-4`}>{title && <div className="font-bold text-slate-800 mb-1">{title}</div>}{cn && <div className="text-xs text-slate-500 mb-2">{cn}</div>}<div className="text-sm text-slate-700">{children}</div></div>);
+**Company Snapshot (2007):**
+- Founded 1998 by Dr. Neil Clark Warren (clinical psychologist, 35 yrs experience) and son-in-law Greg Forgatch
+- Launched August 2000 with $3M seed from Fayez Sarofim & Company (Houston)
+- ~230 employees, approximately half in customer service
+- 14+ million people completed the Relationship Questionnaire in first 7 years
+- 236 eHarmony members married every day in the US (2007 Harris study) = 2% of all US marriages
+- 60% of users were women; people 45+ were fastest-growing segment
+- Charged roughly 2x competitors; premium pricing strategy
+- Profitable; cash-flow positive since 2002
+- Technology Crossover Ventures and Sequoia Capital invested (2004)`,
+          contentZH: `**時間：** 2007年10月。CEO Greg Waldorf 與總裁兼營運長 Greg Steiner 在 I-10 高速公路上，剛結束全天策略會議。
+
+**核心決策：** 面對 Match（Chemistry）、Yahoo! Personals、免費網站（Plenty of Fish、OKCupid）及社群網路（MySpace、Facebook）的激烈競爭，應選擇四個策略選項中的哪一個。
+
+**公司概況（2007年）：**
+- 1998年由 Dr. Neil Clark Warren（臨床心理學家，35年執業經驗）與女婿 Greg Forgatch 創立
+- 2000年8月上線，種子資金300萬美元來自休士頓 Fayez Sarofim & Company
+- 約230名員工，約半數從事客服
+- 創立前七年，超過1,400萬人完成「關係問卷」
+- 2007年 Harris 研究：平均每天236名 eHarmony 會員在美國結婚 = 全美婚姻的2%
+- 60%使用者為女性；45歲以上為成長最快族群
+- 收費約為競爭對手的兩倍；採取溢價定價策略
+- 公司獲利中；自2002年起現金流為正
+- Technology Crossover Ventures 與紅杉資本（Sequoia Capital）於2004年投資`
+        },
+        {
+          titleEN: "Industry Context (Marriage & Personals Markets)",
+          titleZH: "產業背景（婚姻與交友市場）",
+          contentEN: `**Marriage Market Trends:**
+- Only 16% of US singles (~7% of adult population) actively looking for a partner
+- Marriage rate at historical low; median age rising (27 men / 26 women by 2004, vs. 26/22 in 1890)
+- Divorce peaked in 1981, declining since; 45% of marriages end in divorce, most in 4th year
+- Cohabitation rates rose from 2.9% to 4.7% (1995-2005)
+- Marriage shifted from "functional partnership" to seeking "love, sexual passion, or even close friendship" — spouses became more like "experience goods" than "search goods"
+
+**Online Personals Industry:**
+- First online personals: 1992; initial stigma very high
+- By 2005: 16 million people had visited a site at least once
+- Industry revenue ~$900M in 2007; expected to double by 2012
+- 37% of people looking for relationships had internet access but hadn't visited a personals site (growth room)
+- Repeat customer tendency: once subscribed, people tended to re-subscribe
+- Of 2.2 million marriages/year, reportedly 120,000 occurred between people who met on personals sites; insiders claimed nearly 1/5 of marriages were initiated online
+- 45% of personals users never married; 31% divorced/separated/widowed; 23% married
+- 40% entered long-term relationships via online personals
+- 40-50 year olds: fastest-growing online dating demographic`,
+          contentZH: `**婚姻市場趨勢：**
+- 僅16%的美國單身者（約成年人口的7%）正在積極尋找伴侶
+- 結婚率處於歷史最低點；結婚年齡中位數上升（2004年男性27歲／女性26歲，1890年為男性26歲／女性22歲）
+- 離婚率於1981年達到高峰後持續下降；45%的婚姻以離婚收場，多數在第四年
+- 同居比率從2.9%升至4.7%（1995-2005年）
+- 婚姻已從「功能性合夥」轉向追求「愛情、性吸引力、甚至親密友誼」——配偶從「搜尋財」變得更像「經驗財」
+
+**線上交友產業：**
+- 第一個線上交友網站：1992年；初期社會汙名極高
+- 至2005年：1,600萬人至少造訪過一次
+- 2007年產業營收約9億美元；預計2012年翻倍
+- 37%尋找伴侶者有網路但尚未造訪交友網站（成長空間）
+- 回購傾向：一旦訂閱，使用者傾向續訂
+- 每年220萬樁婚姻中，據報12萬樁發生在透過交友網站認識的人之間；業內人士認為近五分之一的婚姻始於線上
+- 交友網站使用者：45%未婚；31%離婚／分居／喪偶；23%已婚
+- 40%透過線上交友進入長期關係
+- 40-50歲：線上交友成長最快的族群`
+        }
+      ]
+    },
+    {
+      id: "data",
+      titleEN: "II. COMPLETE INVENTORY: Every Data / Data Source eHarmony Has Access To",
+      titleZH: "二、完整盤點：eHarmony 可取得的所有資料與資料來源",
+      tag: "CLASS PREP REQUIREMENT",
+      tagZH: "課堂準備要求",
+      subsections: [
+        {
+          titleEN: "A. Personality Profile / Relationship Questionnaire Data",
+          titleZH: "A. 個性檔案／關係問卷資料",
+          contentEN: `**The core data asset.** Initially 436 questions, pared to 258 (later abbreviated to ~250). Covers 29 basic measures of compatibility across three primary constructs: personality, values, and interests.
+
+Specific data fields collected:
+1. **Personal lifestyle preferences** — daily habits, routines
+2. **Communication style** — how individuals express themselves
+3. **Values** — moral, ethical, and life-priority frameworks
+4. **Beliefs** — religious, spiritual, philosophical orientations
+5. **Attitudes** — disposition toward various life situations
+6. **Personality background** — family background, upbringing
+7. **Birth order** — position among siblings
+8. **Energy level** — activity and vitality self-assessment
+9. **Intelligence** — self-reported cognitive engagement
+10. **Spirituality** — depth and nature of spiritual life
+11. **Special interests** — hobbies, passions, pursuits
+12. **Future aspirations** — life goals and plans
+13. **Self-descriptions** — traits like "agreeable," "spiritual," "cold," "quarrelsome," "attractive," "liberal"
+14. **Information-seeking behavior** — social occasions preferences
+15. **Emotional self-assessment** — feelings like "Happy," "Fearful about future," "Misunderstood," "Fortunate"
+16. **Partner preference characteristics** — energy level, communication ability
+17. **Personality traits** — via multiple-choice and scale-rated items
+18. **Personal interests inventory** — "board games," "church involvement," "movies," "shopping"
+19. **Living skills self-assessment** — practical life capabilities
+20. **Matching preferences** — smoking tolerance, relocation willingness, ideal match distance
+21. **Height, ethnicity, religion, number of marriages, number of children, home region**
+22. **Photos** — optional upload; 80% of paying subscribers had photos posted`,
+          contentZH: `**核心資料資產。** 最初436題，精簡為258題（後縮短至約250題）。涵蓋29項基本相容性指標，橫跨三大主要構面：性格、價值觀與興趣。
+
+具體蒐集的資料欄位：
+1. **個人生活方式偏好** — 日常習慣、作息
+2. **溝通風格** — 個人表達方式
+3. **價值觀** — 道德、倫理與人生優先順序框架
+4. **信仰** — 宗教、靈性、哲學取向
+5. **態度** — 面對各種生活情境的傾向
+6. **個性背景** — 家庭背景、成長環境
+7. **排行** — 在兄弟姊妹中的位置
+8. **精力水平** — 活動力與活力自我評估
+9. **智力** — 自我報告的認知參與程度
+10. **靈性** — 精神生活的深度與性質
+11. **特殊興趣** — 嗜好、熱情、追求
+12. **未來抱負** — 人生目標與計畫
+13. **自我描述** — 如「隨和」、「具靈性」、「冷淡」、「好爭辯」、「有吸引力」、「自由派」
+14. **資訊尋求行為** — 社交場合偏好
+15. **情緒自我評估** — 如「快樂」、「對未來恐懼」、「被誤解」、「幸運」
+16. **伴侶偏好特質** — 精力水平、溝通能力
+17. **人格特質** — 透過多選題與量表評分
+18. **個人興趣清單** — 「桌遊」、「教會參與」、「電影」、「購物」
+19. **生活技能自評** — 實際生活能力
+20. **配對偏好** — 吸菸容忍度、搬遷意願、理想配對距離
+21. **身高、種族、宗教、婚姻次數、子女數、居住地區**
+22. **照片** — 選擇性上傳；80%的付費會員已上傳照片`
+        },
+        {
+          titleEN: "B. Matching Algorithm & Outcome Data",
+          titleZH: "B. 配對演算法與結果資料",
+          contentEN: `1. **Algorithm validation dataset** — 4,000+ couples studied between 2000-2004; algorithm tested against Dyadic Adjustment Scale (long-term relationship happiness measure)
+2. **Match acceptance/rejection data** — whether each party chose to pursue or "close" a match
+3. **Match quality signals** — subscription driven by how much users like their matches; re-subscription rates correlated with number of hypothetical pairings available
+4. **Screening/rejection data** — the company declined to sell memberships to ~20% of applicants (already married, underage, divorced 3+ times); estimated $10M/year in foregone revenue; over 1 million total people rejected since inception
+5. **Patent on matching system** — secured May 2004
+6. **Couples research data** — studies of married couples to validate that algorithm-predicted matches were happier than couples who met elsewhere`,
+          contentZH: `1. **演算法驗證資料集** — 2000至2004年間研究4,000對以上伴侶；以「雙方適應量表」（衡量長期關係幸福感）測試演算法
+2. **配對接受／拒絕資料** — 雙方是否選擇追求或「關閉」配對
+3. **配對品質訊號** — 訂閱受使用者對配對滿意度驅動；續訂率與可用假設配對數量相關
+4. **篩選／拒絕資料** — 公司拒絕向約20%的申請者銷售會籍（已婚、未成年、離婚三次以上）；估計每年放棄1,000萬美元收入；創立以來累計拒絕超過100萬人
+5. **配對系統專利** — 2004年5月取得
+6. **伴侶研究資料** — 對已婚伴侶的研究，驗證演算法預測的配對比透過其他方式認識的伴侶更幸福`
+        },
+        {
+          titleEN: "C. Guided Communication Behavioral Data",
+          titleZH: "C. 引導式溝通行為資料",
+          contentEN: `1. **Stage 1 — Easy-to-answer questions:** Each member chose 5 questions from eHarmony's list and sent to match (e.g., "If you were taken by your date to a party where you knew no one, how would you respond?") with multiple-choice answers
+2. **Stage 2 — "Must haves" and "Can't stands":** Personal list exchanges revealing dealbreakers and non-negotiables
+3. **Stage 3 — Open-ended questions:** Three deep questions exchanged (e.g., "What person in your life has been most inspirational, and why?")
+4. **Open Communication data:** Email exchanges, photo sharing, meeting arrangement discussions
+5. **Fast Track usage data** — 10% of members used Fast Track (bypassing Guided Communication); tripled after letting users state preferred communication method; men requested it more
+6. **Match closure data** — 20-30% of matches ended up in Open Communication; either party could "close" at any point
+7. **Message read-receipt data** — eHarmony was considering adding read-receipt feature to address paying subscribers' frustration with non-responsive matches`,
+          contentZH: `1. **第一階段 — 簡易回答問題：** 每位會員從 eHarmony 提供的清單中選擇5個問題發送給配對對象（如「假如約會對象帶你參加一個你不認識任何人的聚會，你會如何回應？」），附多選答案
+2. **第二階段 — 「必備條件」與「無法忍受」：** 交換個人清單，揭示底線與不可妥協事項
+3. **第三階段 — 開放式問題：** 交換三個深度問題（如「你生命中最具啟發性的人是誰？為什麼？」）
+4. **開放溝通資料：** 電子郵件交流、照片分享、見面安排討論
+5. **快速通道使用資料** — 10%的會員使用快速通道（跳過引導式溝通）；允許使用者選擇偏好的溝通方式後增加三倍；男性較常請求
+6. **配對關閉資料** — 20-30%的配對最終進入開放溝通；任一方可隨時「關閉」
+7. **訊息已讀回執資料** — eHarmony 正考慮新增已讀回執功能，以解決付費會員對未回應配對的不滿`
+        },
+        {
+          titleEN: "D. User Behavioral & Engagement Data",
+          titleZH: "D. 使用者行為與參與度資料",
+          contentEN: `1. **Registration vs. completion funnel data** — men less likely to complete questionnaire once started
+2. **Conversion rates** — eHarmony converted active-to-paying members 3x industry average
+3. **Subscription/renewal patterns** — pricing tiers from 1-month to 12-month; re-subscription rates as function of match availability
+4. **Paying vs. non-paying member interaction data** — non-paying members could still be matched and initiate interactions, creating conversion opportunities but also friction
+5. **Time-to-marriage data** — successful subscriber took 4-6 months on average to be matched with eventual spouse
+6. **Geographic distribution data** — members distributed well across US with slight skew toward less populous areas
+7. **Demographic data** — age, gender ratios (60% women), visit patterns (women generated 2/3 of visits)
+8. **Member satisfaction data** — Harris Interactive study (Aug 2004-Aug 2005): 90 members married daily; follow-up (2007): 236 daily`,
+          contentZH: `1. **註冊與完成漏斗資料** — 男性一旦開始填寫問卷，完成的可能性較低
+2. **轉換率** — eHarmony 將活躍會員轉為付費會員的比率為業界平均的三倍
+3. **訂閱／續訂模式** — 定價從1個月到12個月不等；續訂率為配對可用數量的函數
+4. **付費與非付費會員互動資料** — 非付費會員仍可被配對並發起互動，創造轉換機會但也產生摩擦
+5. **成婚時間資料** — 成功的訂閱者平均需要4-6個月才能與最終配偶配對
+6. **地理分佈資料** — 會員在全美分佈良好，略偏向人口較少地區
+7. **人口統計資料** — 年齡、性別比（60%女性）、造訪模式（女性產生三分之二的造訪量）
+8. **會員滿意度資料** — Harris Interactive 研究（2004年8月-2005年8月）：每天90位會員結婚；後續追蹤（2007年）：每天236位`
+        },
+        {
+          titleEN: "E. Marketing & Acquisition Data",
+          titleZH: "E. 行銷與獲客資料",
+          contentEN: `1. **Advertising spend data** — up to $80M/year; 3/4 on TV and radio, remainder on paid internet search and banner ads
+2. **Channel performance data** — banner ads: high visibility, decent click-through, low conversion; paid search: more expensive per acquisition
+3. **Campaign A/B test data** — tested "problem-first" ads (lonely individuals) vs. "benefit-first" ads (happy couples); problem-first increased anxiety and reduced response rates
+4. **Testimonial/success story data** — featured real couples in documentary-style ads
+5. **Media buying efficiency data** — worked with direct-response-focused agencies; bought remnant inventory at discount; avoided broadcast TV (expensive); used national cable only
+6. **Customer acquisition cost data** — profitability depended on efficient acquisition; Match's spend increase from $80M to $145M tracked against eHarmony's percentage of sales`,
+          contentZH: `1. **廣告支出資料** — 每年高達8,000萬美元；四分之三用於電視和廣播，其餘用於付費網路搜尋和橫幅廣告
+2. **管道績效資料** — 橫幅廣告：高曝光、尚可點擊率、低轉換率；付費搜尋：每次獲客成本更高
+3. **廣告 A/B 測試資料** — 測試「問題先行」廣告（孤獨個體）vs.「效益先行」廣告（幸福伴侶）；問題先行增加焦慮、降低回應率
+4. **見證／成功故事資料** — 以真實伴侶拍攝紀錄片風格廣告
+5. **媒體購買效率資料** — 與專注直效行銷的代理商合作；購買尾盤庫存以取得折扣；避免無線電視（昂貴）；僅使用全國有線電視
+6. **客戶獲取成本資料** — 獲利能力取決於獲客效率；Match 廣告支出從8,000萬增至1.45億美元，與 eHarmony 的銷售百分比追蹤比較`
+        },
+        {
+          titleEN: "F. R&D and Labs Data",
+          titleZH: "F. 研發與實驗室資料",
+          contentEN: `1. **eHarmony Labs data (opened 2007)** — 5 research scientists; 2,000 sq ft clinical space with observation rooms; studying biological, sociological, and neurological underpinnings of love
+2. **Physical attraction research** — Buckwalter: "physical attraction plays a large role in the initial meeting but is a very poor predictor of long-term success"
+3. **Five-year longitudinal study** — 400 couples tracked through engagement, marriage, pregnancy, childbirth; early finding: "the biggest adjustment of every marriage is the birth of the first child"
+4. **Speed-dating and offline meeting research** — researchers found online daters "ended up going out with fewer than 1% of the people whose profiles they studied" and dates often resulted in "huge letdowns"
+5. **Married couples compatibility research** — 2,000 couples surveyed before website launch to develop the instrument; algorithm predicted top-quartile Dyadic Adjustment Scale scores`,
+          contentZH: `1. **eHarmony Labs 資料（2007年成立）** — 5位研究科學家；2,000平方呎臨床空間含觀察室；研究愛情的生物學、社會學與神經學基礎
+2. **外貌吸引力研究** — Buckwalter：「外貌吸引力在初次見面時扮演重要角色，但對預測長期成功極為薄弱」
+3. **五年縱貫研究** — 追蹤400對伴侶的訂婚、結婚、懷孕、生子過程；初步發現：「每段婚姻最大的調適是第一個孩子的出生」
+4. **快速約會與線下見面研究** — 研究者發現線上約會者「最終只與他們查看過的個人檔案中不到1%的人約會」，且約會經常帶來「巨大的失望」
+5. **已婚伴侶相容性研究** — 網站上線前調查2,000對伴侶以開發測量工具；演算法預測了「雙方適應量表」前四分之一的分數`
+        },
+        {
+          titleEN: "G. Competitive Intelligence & Market Data",
+          titleZH: "G. 競爭情報與市場資料",
+          contentEN: `1. **Competitor pricing data** — detailed tracking across Match, Chemistry, Yahoo! Personals (Exhibits 9, 10)
+2. **Market share and traffic data** — Match: 1.3M paying customers; Chemistry: 2M registered; Yahoo! Personals: 7M unique visitors (5% of dating visits); Plenty of Fish: half eHarmony visitors but 20% more visits
+3. **Industry revenue benchmarks** — $900M total industry (2007); Match revenues ~$349M projected; average revenue/customer for Yahoo! Personals: $16/month
+4. **Competitor feature comparison data** — Chemistry's personality test (fewer questions, different methodology: interpersonal chemistry vs. psychosocial compatibility), Match's Dr. Phil campaign results
+5. **Social network threat data** — Jupiter Research saw "no signs that the eruption of social networks has burned the paid online personals market"; only ~5% of people meeting online met through social network sites`,
+          contentZH: `1. **競爭對手定價資料** — 詳細追蹤 Match、Chemistry、Yahoo! Personals 的定價（見附錄9、10）
+2. **市場佔有率與流量資料** — Match：130萬付費客戶；Chemistry：200萬註冊用戶；Yahoo! Personals：700萬不重複訪客（交友網站造訪量的5%）；Plenty of Fish：訪客數為 eHarmony 的一半，但造訪次數多20%
+3. **產業營收基準** — 2007年全產業共9億美元；Match 預估營收約3.49億美元；Yahoo! Personals 每位客戶平均月營收16美元
+4. **競爭對手功能比較資料** — Chemistry 的個性測試（題目較少、方法論不同：人際化學 vs. 心理社會相容性）、Match 的 Dr. Phil 行銷活動成效
+5. **社群網路威脅資料** — Jupiter Research 認為「沒有跡象顯示社群網路的爆發已燒毀付費線上交友市場」；僅約5%的線上認識者是透過社群網站`
+        },
+        {
+          titleEN: "H. Operational & Financial Data",
+          titleZH: "H. 營運與財務資料",
+          contentEN: `1. **Subscription tier revenue data** — 1-month ($59.95), 3-month ($39.95/mo), 6-month ($29.95/mo), 12-month ($19.95/mo) as of 2008
+2. **Customer lifetime value data** — implicit in re-subscription modeling based on match quality
+3. **Rejection cost tracking** — $10M/year estimated foregone revenue from screening out applicants
+4. **Employee allocation data** — ~115 of 230 employees in customer service
+5. **Harris Interactive commissioned studies** — externally validated marriage outcome data`,
+          contentZH: `1. **訂閱方案營收資料** — 1個月（$59.95）、3個月（$39.95/月）、6個月（$29.95/月）、12個月（$19.95/月），截至2008年
+2. **客戶終身價值資料** — 隱含於基於配對品質的續訂模型中
+3. **拒絕成本追蹤** — 篩選申請者導致的預估放棄收入為每年1,000萬美元
+4. **員工配置資料** — 230名員工中約115名從事客服
+5. **Harris Interactive 委託研究** — 外部驗證的婚姻結果資料`
+        }
+      ]
+    },
+    {
+      id: "platform",
+      titleEN: "III. Platform & Operating Model Analysis (Course Framework Lens)",
+      titleZH: "三、平台與營運模式分析（課程框架視角）",
+      subsections: [
+        {
+          titleEN: "A. Is eHarmony a Platform? Multi-Sided Market Analysis",
+          titleZH: "A. eHarmony 是平台嗎？多邊市場分析",
+          contentEN: `**[CLASS LENS]** eHarmony operates as a **matching platform** in a two-sided market: men seeking women and women seeking men (heterosexual matching). However, its operating model is fundamentally different from typical "Do-It-Yourself" dating platforms.
+
+**Sides of the Platform:**
+- **Side 1: Female users** (60% of user base; generate 2/3 of visits)
+- **Side 2: Male users** (40% of user base; less likely to complete questionnaire; more likely to request Fast Track)
+- **Potential Side 3 (not pursued):** Same-sex users (excluded citing limited resources and small market size)
+- **Potential Side 4 (Option 3):** Advertisers (if free life-stage sites launched)
+
+**Critical distinction from open platforms:** eHarmony is not a browsing/search platform. It is a **curated matching platform** where the algorithm, not the user, determines who sees whom. Users cannot browse profiles independently. This is a fundamentally different operating model from Match, Yahoo! Personals, or any DIY site.
+
+**[INFERENCE]** This positions eHarmony closer to a "prediction factory" model than a pure platform-mediation model. The platform's core value proposition IS the prediction — the algorithm's judgment about compatibility.`,
+          contentZH: `**[課程視角]** eHarmony 作為一個**配對平台**運作於雙邊市場中：尋找女性的男性與尋找男性的女性（異性配對）。然而，其營運模式與典型的「自助式」交友平台有本質上的不同。
+
+**平台各邊：**
+- **第一邊：女性使用者**（佔使用者基礎的60%；產生三分之二的造訪量）
+- **第二邊：男性使用者**（佔使用者基礎的40%；完成問卷的可能性較低；較常要求快速通道）
+- **潛在第三邊（未推行）：** 同性使用者（以資源有限及市場規模小為由排除）
+- **潛在第四邊（選項三）：** 廣告主（若推出免費人生階段網站）
+
+**與開放平台的關鍵區別：** eHarmony 不是瀏覽／搜尋平台。它是一個**策展式配對平台**，由演算法而非使用者決定誰能看到誰。使用者無法獨立瀏覽個人檔案。這與 Match、Yahoo! Personals 或任何自助式網站的營運模式截然不同。
+
+**[推論]** 這使 eHarmony 更接近「預測工廠」模式，而非純粹的平台中介模式。平台的核心價值主張正是預測本身——演算法對相容性的判斷。`
+        },
+        {
+          titleEN: "B. Network Effects Analysis",
+          titleZH: "B. 網路效應分析",
+          contentEN: `**Cross-side (indirect) network effects:**
+- More women → more potential matches for men → more value for men (and vice versa)
+- BUT eHarmony's model complicates this: Waldorf noted, "Two years ago, I believed that we had diminishing returns to subscribers in the network. I no longer believe this at all. There is still a massive user satisfaction effect to having more users."
+- The mechanism: more users → more potential high-quality matches for the algorithm to select from → better match quality → higher satisfaction → higher re-subscription
+
+**Same-side (direct) network effects:**
+- Traditionally NEGATIVE in dating: more men competing for the same women = worse for each individual man (congestion). DIY sites suffered heavily from this — women were "inundated by messages from men"
+- eHarmony's algorithm MITIGATES negative same-side effects by controlling who matches with whom, preventing the "inundation" problem
+
+**Data Network Effects (key for "Prediction Factory" lens):**
+- [INFERENCE] More users completing the questionnaire → richer dataset → better algorithm calibration → better predictions → higher match quality → more satisfied users → more users. This is the critical data flywheel.
+- The 4,000-couple validation study and ongoing Labs research continuously feed back into algorithm improvement.
+
+**Network effects are DESIGNED, not inherent:**
+- The questionnaire screens out low-quality participants (self-selection + company rejection)
+- Guided Communication forces depth of interaction
+- Algorithm controls matching, preventing the congestion/superficiality problems of open platforms`,
+          contentZH: `**跨邊（間接）網路效應：**
+- 更多女性 → 更多潛在配對給男性 → 對男性更有價值（反之亦然）
+- 但 eHarmony 的模式使此更為複雜：Waldorf 指出，「兩年前，我相信我們在網路中的訂閱者存在遞減報酬。我現在完全不這麼認為了。更多使用者帶來的使用者滿意度效應仍然是巨大的。」
+- 機制：更多使用者 → 演算法有更多高品質配對候選 → 更好的配對品質 → 更高滿意度 → 更高續訂率
+
+**同邊（直接）網路效應：**
+- 在交友領域傳統上為負面：更多男性競爭同樣的女性 = 對每位男性更差（壅塞）。自助式網站深受其害——女性被「男性的訊息淹沒」
+- eHarmony 的演算法透過控制誰與誰配對來**緩解負面同邊效應**，防止「訊息轟炸」問題
+
+**資料網路效應（「預測工廠」視角的關鍵）：**
+- [推論] 更多使用者完成問卷 → 更豐富的資料集 → 更好的演算法校準 → 更好的預測 → 更高的配對品質 → 更多滿意使用者 → 更多使用者。這是關鍵的資料飛輪。
+- 4,000對伴侶的驗證研究與持續進行的 Labs 研究不斷回饋至演算法的改進。
+
+**網路效應是被設計的，而非天生的：**
+- 問卷篩選掉低品質參與者（自我篩選 + 公司拒絕）
+- 引導式溝通強制互動深度
+- 演算法控制配對，防止開放平台的壅塞／膚淺問題`
+        },
+        {
+          titleEN: "C. Dimensions of Value (DoV) for Users Seeking Serious Relationships",
+          titleZH: "C. 尋求認真關係使用者的價值維度（DoV）",
+          contentEN: `**Key Dimensions of Value in the dating/matching market:**
+
+1. **Match quality / compatibility accuracy** — How likely is a match to lead to a satisfying long-term relationship?
+2. **Pool size / variety of potential matches** — How many eligible partners are available?
+3. **Safety & trust / screening quality** — How confident can users be that profiles are genuine and members are serious?
+4. **Privacy / stigma reduction** — Can users participate without social embarrassment?
+5. **Depth of information about matches** — How much do you learn about a person before deciding?
+6. **Ease of use / time efficiency** — How quickly and easily can users engage?
+7. **Price / affordability** — Total cost of participation
+8. **Communication quality** — Does the platform facilitate meaningful conversation?
+9. **Success rate** — Track record of producing marriages/long-term relationships
+10. **Emotional experience** — Does the process feel respectful, hopeful, and dignified?`,
+          contentZH: `**交友／配對市場的關鍵價值維度：**
+
+1. **配對品質／相容性準確度** — 配對導致令人滿意的長期關係的可能性有多高？
+2. **候選池大小／潛在配對的多樣性** — 有多少符合條件的伴侶可供選擇？
+3. **安全與信任／篩選品質** — 使用者對個人檔案真實性及會員認真程度有多大信心？
+4. **隱私／降低社會汙名** — 使用者能否在不尷尬的情況下參與？
+5. **配對資訊深度** — 在做決定前能了解一個人多少？
+6. **易用性／時間效率** — 使用者參與的速度和便利性如何？
+7. **價格／可負擔性** — 參與的總成本
+8. **溝通品質** — 平台是否促進有意義的對話？
+9. **成功率** — 促成婚姻／長期關係的歷史記錄
+10. **情感體驗** — 過程是否讓人感到被尊重、充滿希望且有尊嚴？`
+        },
+        {
+          titleEN: "D. Value Curve Comparison: eHarmony vs. Competitors",
+          titleZH: "D. 價值曲線比較：eHarmony vs. 競爭對手",
+          contentEN: `**eHarmony's Value Curve (HIGH on):**
+- Match quality/compatibility: VERY HIGH (patented algorithm, 29 dimensions, validated against outcomes)
+- Safety/trust/screening: VERY HIGH (rejects 20% of applicants, extensive questionnaire as barrier)
+- Depth of information: HIGH (Guided Communication forces deep exchanges)
+- Communication quality: HIGH (structured process prevents superficial exchanges)
+- Success rate: VERY HIGH (2% of all US marriages; 236/day)
+- Emotional experience: HIGH (dignified, relationship-focused branding)
+
+**eHarmony's Value Curve (LOW on):**
+- Pool size/variety: MODERATE-LOW (screens out many; no same-sex; no casual daters)
+- Ease of use/time efficiency: LOW (1.5-2 hours for questionnaire; slow Guided Communication process)
+- Price/affordability: LOW (roughly 2x competitors)
+- User control/autonomy: VERY LOW (cannot browse; algorithm decides matches)
+
+**Match/Chemistry Value Curve:**
+- Pool size: HIGH (1.2M paying at Match; less selective screening)
+- Price: MODERATE (roughly 10% below eHarmony for Chemistry)
+- Ease of use: HIGH (browse freely; Chemistry questionnaire shorter)
+- Match quality: MODERATE (Chemistry's algorithm less validated)
+- Safety/trust: LOW-MODERATE (minimal screening)
+
+**Free Sites (Plenty of Fish) Value Curve:**
+- Price: VERY HIGH (free)
+- Pool size: VERY HIGH (minimal barriers)
+- Ease/speed: HIGH (immediate access)
+- Match quality: VERY LOW (no algorithm; self-service browsing)
+- Safety/trust: LOW (no screening; misrepresentation rampant)
+
+**Social Networks Value Curve:**
+- Price: VERY HIGH (free)
+- Trust/authenticity: HIGH (real identities, friend connections verify)
+- Pool size: VERY HIGH
+- Match quality: LOW (no matching purpose; no compatibility data)
+- Privacy for dating: LOW (40%+ didn't indicate marital status; public activity visible)
+- Useful for 40-50+ age group: LOW (social networks used less by this demographic)`,
+          contentZH: `**eHarmony 的價值曲線（高分項）：**
+- 配對品質／相容性：極高（專利演算法、29項維度、以結果驗證）
+- 安全／信任／篩選：極高（拒絕20%申請者、大量問卷作為門檻）
+- 資訊深度：高（引導式溝通強制深度交流）
+- 溝通品質：高（結構化流程防止膚淺交流）
+- 成功率：極高（全美婚姻的2%；每天236對）
+- 情感體驗：高（有尊嚴、以關係為核心的品牌形象）
+
+**eHarmony 的價值曲線（低分項）：**
+- 候選池大小／多樣性：中低（篩選掉許多人；無同性配對；無隨意約會者）
+- 易用性／時間效率：低（問卷需1.5-2小時；引導式溝通過程緩慢）
+- 價格／可負擔性：低（約為競爭對手的兩倍）
+- 使用者控制／自主性：極低（無法瀏覽；演算法決定配對）
+
+**Match／Chemistry 的價值曲線：**
+- 候選池：高（Match 有120萬付費會員；篩選較不嚴格）
+- 價格：中等（Chemistry 約低 eHarmony 10%）
+- 易用性：高（自由瀏覽；Chemistry 問卷較短）
+- 配對品質：中等（Chemistry 的演算法驗證較不充分）
+- 安全／信任：中低（篩選極少）
+
+**免費網站（Plenty of Fish）的價值曲線：**
+- 價格：極高（免費）
+- 候選池：極高（門檻極低）
+- 便利／速度：高（即時存取）
+- 配對品質：極低（無演算法；自助瀏覽）
+- 安全／信任：低（無篩選；虛假資料泛濫）
+
+**社群網路的價值曲線：**
+- 價格：極高（免費）
+- 信任／真實性：高（真實身分、朋友連結可驗證）
+- 候選池：極高
+- 配對品質：低（無配對目的；無相容性資料）
+- 約會隱私：低（超過40%未標示婚姻狀態；活動公開可見）
+- 對40-50歲以上族群的實用性：低（此族群較少使用社群網路）`
+        }
+      ]
+    },
+    {
+      id: "prediction",
+      titleEN: "IV. Prediction Factory / Automation of Judgment Analysis",
+      titleZH: "四、預測工廠／判斷自動化分析",
+      tag: "MODULE II CORE LENS",
+      tagZH: "模組二核心視角",
+      subsections: [
+        {
+          titleEN: "A. eHarmony as a 'Prediction Factory'",
+          titleZH: "A. eHarmony 作為「預測工廠」",
+          contentEN: `**[CLASS LENS — This is the core analytical frame for this module]**
+
+Per Agrawal, Gans & Goldfarb's "Prediction Machines" framework (course reading): AI/ML makes prediction cheaper. When prediction gets cheaper, organizations can redesign operating models around automated prediction.
+
+**What is eHarmony predicting?**
+The core prediction: Given Person A's personality/values/interests profile and Person B's profile, how likely are they to form a satisfying, enduring relationship?
+
+This is a classic "judgment" problem that was historically handled by:
+- Individuals themselves (browsing profiles, going on dates)
+- Professional matchmakers ($1,500-$10,000; charged up to 100x more)
+- Family, friends, community networks
+- Chance encounters (work, church, bars — see Exhibit 7)
+
+**eHarmony automated this judgment.** The matching algorithm replaces human search and intuition with a statistical model trained on couple-outcome data.
+
+**The Prediction Factory Design:**
+1. **Data Collection** → Personality Profile (258-436 structured questions)
+2. **Algorithm / Model** → Patented matching algorithm; validated on 4,000+ couples; predicts Dyadic Adjustment Scale outcomes
+3. **Decision / Action** → Algorithm generates matches; users cannot override by browsing
+4. **Feedback Loop** → Match acceptance/rejection data; marriage outcomes (Harris study); Labs longitudinal research; re-subscription rates as proxy for match satisfaction
+5. **Continuous Improvement** → Labs research feeding new insights back into the model
+
+**Key insight:** eHarmony doesn't just USE an algorithm — its entire operating model IS the prediction factory. Remove the algorithm, and the business has no value proposition. The questionnaire, the matching, the Guided Communication, the rejection of unsuitable applicants — all are designed to serve the prediction.`,
+          contentZH: `**[課程視角 — 此為本模組的核心分析框架]**
+
+依據 Agrawal、Gans 與 Goldfarb 的「預測機器」框架（課程指定閱讀）：AI/ML 使預測變得更便宜。當預測變便宜時，組織可以圍繞自動化預測重新設計營運模式。
+
+**eHarmony 在預測什麼？**
+核心預測：給定 A 的性格／價值觀／興趣檔案與 B 的檔案，他們形成一段令人滿意且持久的關係的可能性有多高？
+
+這是一個典型的「判斷」問題，歷史上由以下方式處理：
+- 個人自行處理（瀏覽檔案、約會）
+- 專業媒人（收費$1,500-$10,000；費用高達100倍）
+- 家人、朋友、社區網路
+- 偶然相遇（工作、教會、酒吧 — 見附錄7）
+
+**eHarmony 自動化了這項判斷。** 配對演算法以經過伴侶結果資料訓練的統計模型取代了人類的搜尋與直覺。
+
+**預測工廠設計：**
+1. **資料蒐集** → 個性檔案（258-436題結構化問題）
+2. **演算法／模型** → 專利配對演算法；以4,000對以上伴侶驗證；預測「雙方適應量表」結果
+3. **決策／行動** → 演算法產生配對；使用者無法透過瀏覽覆寫
+4. **回饋迴路** → 配對接受／拒絕資料；婚姻結果（Harris 研究）；Labs 縱貫研究；續訂率作為配對滿意度的代理變數
+5. **持續改善** → Labs 研究將新洞察回饋至模型
+
+**關鍵洞察：** eHarmony 不僅僅是使用演算法——其整個營運模式本身就是預測工廠。移除演算法，這個企業就沒有價值主張。問卷、配對、引導式溝通、拒絕不合適的申請者——一切都是為了服務預測。`
+        },
+        {
+          titleEN: "B. Algorithm Design Choices & Trade-offs",
+          titleZH: "B. 演算法設計選擇與取捨",
+          contentEN: `**Similarity vs. Complementarity:**
+- Team was "convinced that successful relationships were almost universally characterized by a high degree of similarity, particularly in areas like intellectual ability and emotional stability"
+- Priority order: personality characteristics > values > interests
+- Agreeableness and emotional stability identified as "very important"
+- This CONTRADICTS popular wisdom that "opposites attract"
+
+**Validation Methodology — a pragmatic compromise:**
+- Ideal: longitudinal study tracking singles through matching → dating → marriage → long-term outcomes
+- Actual: studied already-married couples; assumed "if we got really good at predicting satisfied and happy marriages, that we could apply that to singles"
+- This is a significant methodological limitation — survivorship bias, selection bias
+
+**What the algorithm does NOT use:**
+- Does not incorporate feedback from rejected matches ("You don't like that this person has a pet, or you're a vegetarian but you keep being matched with hunters" — this was a KNOWN limitation; improving screening preferences was "a next generation feature in the works")
+- Does not factor in physical attraction (photos were added later; members with photos 9-15x more likely to receive messages)
+
+**[INFERENCE — Prediction Factory assessment:]**
+- This is "weak" AI/ML: statistical pattern-matching on structured questionnaire data, not deep learning
+- The algorithm is essentially a compatibility scoring function validated against outcome data
+- Significant room for improvement: behavioral data from platform interactions (which questions people answer, how they respond in Guided Communication, what matches they close vs. pursue) could dramatically enhance predictive power
+- The algorithm treats the prediction as a ONE-TIME classification at sign-up rather than a continuously updating model`,
+          contentZH: `**相似性 vs. 互補性：**
+- 團隊「確信成功的關係幾乎普遍以高度相似性為特徵，特別是在智力能力和情緒穩定性等領域」
+- 優先順序：性格特質 > 價值觀 > 興趣
+- 隨和性與情緒穩定性被認定為「非常重要」
+- 這與「異性相吸」的流行觀點相矛盾
+
+**驗證方法 — 務實的折衷：**
+- 理想做法：縱貫研究追蹤單身者從配對 → 約會 → 結婚 → 長期結果
+- 實際做法：研究已婚伴侶；假設「如果我們能非常準確地預測滿意且幸福的婚姻，就能將此應用於單身者」
+- 這是一個重大的方法論限制——倖存者偏差、選擇偏差
+
+**演算法未使用的資料：**
+- 未納入被拒絕配對的回饋（「你不喜歡這個人養寵物，或你是素食者但一直被配對給獵人」——這是已知的限制；改善篩選偏好是「開發中的下一代功能」）
+- 未考慮外貌吸引力（照片是後來才加入的；有照片的會員收到訊息的可能性高出9-15倍）
+
+**[推論 — 預測工廠評估：]**
+- 這是「弱」AI/ML：基於結構化問卷資料的統計模式比對，而非深度學習
+- 演算法本質上是一個以結果資料驗證的相容性評分函數
+- 有很大的改善空間：來自平台互動的行為資料（使用者回答了哪些問題、在引導式溝通中如何回應、哪些配對被關閉 vs. 被追求）可大幅增強預測能力
+- 演算法將預測視為註冊時的一次性分類，而非持續更新的模型`
+        },
+        {
+          titleEN: "C. Complementary Operating Model Choices That Serve the Prediction",
+          titleZH: "C. 服務預測的互補營運模式選擇",
+          contentEN: `Every major operating model choice at eHarmony reinforces the prediction factory:
+
+**1. Long questionnaire (1.5-2 hours) →** Rich, structured input data for the algorithm; also self-selects for serious users (men drop out more → the ones who complete are more committed)
+
+**2. Rejection of 20% of applicants →** Cleaner data; removes users the algorithm cannot serve well (already married, serial divorcers); maintains prediction quality even at cost of $10M/year
+
+**3. No browsing allowed →** Forces reliance on the algorithm's prediction; prevents users from making superficial choices that undermine the algorithm's logic
+
+**4. Guided Communication (not free messaging) →** Generates rich behavioral data; forces depth; reduces the "huge letdown" of offline meetings by ensuring deeper pre-meeting compatibility assessment
+
+**5. Premium pricing (~2x competitors) →** Signals quality and seriousness; selects for marriage-minded users who value the prediction; funds the R&D to improve the algorithm
+
+**6. eHarmony Labs investment →** Closes the feedback loop; enables continuous algorithm improvement through longitudinal couple studies and neuroscience/sociology research
+
+**7. Marketing focused on success stories →** Reinforces that the VALUE is the prediction outcome (marriages), not the browsing experience
+
+**[CLASS LENS]** This is a textbook example of Boudreau's "operating model as a set of complementary choices" — each practice reinforces the others and collectively delivers a value curve that cannot be replicated by changing just one or two elements.`,
+          contentZH: `eHarmony 的每一項重大營運模式選擇都強化了預測工廠：
+
+**1. 長問卷（1.5-2小時）→** 為演算法提供豐富、結構化的輸入資料；同時自我篩選出認真的使用者（男性較易中途放棄 → 完成者更有承諾感）
+
+**2. 拒絕20%的申請者 →** 更乾淨的資料；移除演算法無法良好服務的使用者（已婚、多次離婚者）；即使每年損失1,000萬美元也要維護預測品質
+
+**3. 不允許瀏覽 →** 強制依賴演算法的預測；防止使用者做出破壞演算法邏輯的膚淺選擇
+
+**4. 引導式溝通（非自由訊息傳遞）→** 產生豐富的行為資料；強制深度；透過確保更深層的見面前相容性評估，減少線下見面的「巨大失望」
+
+**5. 溢價定價（約為競爭對手的兩倍）→** 傳達品質與認真態度的訊號；篩選出重視預測的以婚姻為目標的使用者；資助改善演算法的研發
+
+**6. eHarmony Labs 投資 →** 閉合回饋迴路；透過縱貫伴侶研究與神經科學／社會學研究實現演算法的持續改善
+
+**7. 行銷聚焦成功故事 →** 強化價值在於預測結果（婚姻），而非瀏覽體驗
+
+**[課程視角]** 這是 Boudreau「營運模式作為互補選擇的集合」的教科書範例——每項實務做法相互強化，共同提供一條無法僅靠改變一兩個元素就能複製的價值曲線。`
+        }
+      ]
+    },
+    {
+      id: "options",
+      titleEN: "V. The Four Strategic Options",
+      titleZH: "五、四個策略選項",
+      subsections: [
+        {
+          titleEN: "Option 1: Defend Core Position — Rapid Membership Growth",
+          titleZH: "選項一：防守核心定位 — 快速會員增長",
+          contentEN: `**Description:** Aggressively grow paying memberships in the long-term relationship segment to deny Chemistry room to grow.
+
+**Tactics discussed:** Increase advertising; reduce barriers to joining (shorten questionnaire? relax rejection criteria?); encourage Fast Track; sell memberships to anyone who wants to purchase.
+
+**Prediction Factory implications:**
+- [INFERENCE] Relaxing quality controls (selling to anyone, shortening questionnaire) would DEGRADE the prediction factory's input data quality
+- Waldorf's shift: "I no longer believe [in diminishing returns to subscribers]" — suggests belief that MORE data improves matching
+- BUT: selling memberships to previously rejected users means the algorithm cannot confidently serve them → recommending matches the system cannot be confident in
+- Tension: short-term revenue/market defense vs. long-term prediction quality
+
+**Risk:** Undermines the very thing that differentiates eHarmony — the curated, high-quality prediction.`,
+          contentZH: `**說明：** 積極擴大長期關係領域的付費會員人數，阻止 Chemistry 獲得成長空間。
+
+**討論的策略：** 增加廣告；降低加入門檻（縮短問卷？放寬拒絕標準？）；鼓勵快速通道；向任何願意購買的人銷售會籍。
+
+**預測工廠意涵：**
+- [推論] 放寬品質控制（向任何人銷售、縮短問卷）會**降低**預測工廠的輸入資料品質
+- Waldorf 的觀點轉變：「我不再相信[訂閱者的遞減報酬]」——暗示相信更多資料能改善配對
+- 但是：向先前被拒絕的使用者銷售會籍意味著演算法無法有信心地服務他們 → 推薦系統無法確信的配對
+- 張力：短期營收／市場防禦 vs. 長期預測品質
+
+**風險：** 破壞使 eHarmony 與眾不同的根本——策展式的高品質預測。`
+        },
+        {
+          titleEN: "Option 2: Broaden to Include Casual/Medium-Term Daters",
+          titleZH: "選項二：擴展至休閒／中期約會者",
+          contentEN: `**Description:** Expand the customer base to include medium-term relationship seekers (not just marriage-minded).
+
+**Prediction Factory implications:**
+- [INFERENCE] This fundamentally changes WHAT is being predicted. The algorithm was validated against long-term marital satisfaction (Dyadic Adjustment Scale). Predicting "medium-term relationship compatibility" is a DIFFERENT prediction problem.
+- Would require retraining or building a second algorithm
+- Only ~5% of 94M US singles were paying members of any online personals site → huge untapped market
+- Waldorf believed the matching algorithm could provide differentiation even in this segment
+
+**Risk:** Direct competition with Match and Yahoo! Personals on their turf; potential brand dilution; no validated algorithm for this use case.`,
+          contentZH: `**說明：** 擴大客戶群以包含中期關係尋求者（不僅限於以婚姻為目標者）。
+
+**預測工廠意涵：**
+- [推論] 這從根本上改變了預測的對象。演算法是以長期婚姻滿意度（「雙方適應量表」）驗證的。預測「中期關係相容性」是一個不同的預測問題。
+- 需要重新訓練或建立第二套演算法
+- 9,400萬美國單身者中僅約5%是任何線上交友網站的付費會員 → 巨大的未開發市場
+- Waldorf 相信配對演算法即使在此領域也能提供差異化
+
+**風險：** 在 Match 和 Yahoo! Personals 的地盤上直接競爭；品牌稀釋風險；此使用情境無經過驗證的演算法。`
+        },
+        {
+          titleEN: "Option 3: New Business — Life Stage Sites (Leveraging Research)",
+          titleZH: "選項三：新事業 — 人生階段網站（善用研究成果）",
+          contentEN: `**Description:** Build a network of eHarmony-branded sites focused on life-stage transitions: weddings, pregnancy/fertility, parenting, elder care. Free-to-use, ad-supported.
+
+**Prediction Factory implications:**
+- [INFERENCE] This leverages the RESEARCH side of the prediction factory (Labs' longitudinal study of 400 couples) rather than the matching algorithm itself
+- Extends the prediction from "who should you marry?" to "how do you navigate life after marriage?"
+- Would generate NEW data types: post-marriage behavioral data, life-stage transition data
+- Revenue model shifts from subscription to advertising → fundamentally different business model
+- Expert advice + community from other users = platform with content + network effects
+
+**Risk:** Completely different competency required; no proven revenue model; stretches the brand; diverts resources from core dating business.`,
+          contentZH: `**說明：** 建立以 eHarmony 品牌為核心的人生階段網站網路，聚焦於人生重大轉折：婚禮、懷孕／生育、育兒、長照。免費使用，廣告支撐。
+
+**預測工廠意涵：**
+- [推論] 這利用的是預測工廠的研究端（Labs 對400對伴侶的縱貫研究），而非配對演算法本身
+- 將預測從「你應該嫁／娶誰？」延伸至「婚後如何面對人生？」
+- 將產生新類型的資料：婚後行為資料、人生階段轉換資料
+- 營收模式從訂閱轉為廣告 → 根本不同的商業模式
+- 專家建議 + 其他使用者的社群 = 具有內容與網路效應的平台
+
+**風險：** 需要完全不同的核心能力；無經過驗證的營收模式；延伸品牌；分散核心交友事業的資源。`
+        },
+        {
+          titleEN: "Option 4: Geographic Expansion (International)",
+          titleZH: "選項四：地理擴張（國際化）",
+          contentEN: `**Description:** Expand to English-speaking countries first, then EU nations where online dating was already popular.
+
+**Prediction Factory implications:**
+- [INFERENCE] Critical question: Does the matching algorithm's predictions TRANSFER across cultures? The algorithm was validated on US couples. Relationship expectations, compatibility dimensions, and cultural norms vary significantly across countries (see Exhibit 4: attitudes toward marriage vary enormously — e.g., only 10% of Americans consider marriage "out-dated" vs. 36% of French).
+- Would need to re-validate the algorithm in each new cultural context
+- Match was already present in 30+ countries, including 7 new countries recently — first-mover risk
+- Data collection challenge: need large user base in each geography for the algorithm to have sufficient matching pool
+
+**Risk:** Algorithm may not transfer; competitors already present; resource-intensive; cultural adaptation required.`,
+          contentZH: `**說明：** 先擴展至英語系國家，再進入線上交友已流行的歐盟國家。
+
+**預測工廠意涵：**
+- [推論] 關鍵問題：配對演算法的預測能否跨文化遷移？演算法是以美國伴侶驗證的。關係期望、相容性維度與文化規範在不同國家間差異極大（見附錄4：對婚姻的態度差異巨大——例如僅10%的美國人認為婚姻「過時」，法國人則為36%）。
+- 需要在每個新的文化脈絡中重新驗證演算法
+- Match 已進入30多個國家，包括近期新進的7個國家——先行者風險
+- 資料蒐集挑戰：需要每個地區有足夠的使用者基礎，演算法才有充足的配對池
+
+**風險：** 演算法可能無法遷移；競爭對手已先行布局；資源密集；需要文化適應。`
+        }
+      ]
+    },
+    {
+      id: "coldcall",
+      titleEN: "VI. Cold-Call Preparation",
+      titleZH: "六、冷叫準備",
+      subsections: [
+        {
+          titleEN: "Likely Opening Questions & Model Answers",
+          titleZH: "可能的開場問題與範例答案",
+          contentEN: `**Q: "What is eHarmony's core business? Is it a platform?"**
+A: eHarmony is a matching platform operating in a two-sided dating market. But unlike typical DIY dating platforms where users browse and self-select, eHarmony's operating model is built around an automated prediction — a patented algorithm that determines who matches with whom. Users cannot browse independently. So it is more accurately described as a "prediction factory" that happens to be organized as a platform, rather than a platform that happens to use an algorithm.
+
+**Q: "What data does eHarmony have?"**
+A: [Use Section II above — be ready to enumerate 5-8 categories quickly, then drill into the most important: the Personality Profile questionnaire data, the algorithm validation data from 4,000+ couples, and the behavioral data from Guided Communication interactions.]
+
+**Q: "Where do eHarmony's network effects come from? Are they strong?"**
+A: The most important network effect is a DATA network effect: more users → richer training data → better algorithm → better match quality → higher satisfaction → more users. There are also traditional cross-side effects (more men → more value for women, vice versa), but eHarmony's algorithm mediates and controls these, unlike open platforms where raw numbers drive value. Waldorf explicitly states he no longer believes in diminishing returns to network size. The algorithm also mitigates the NEGATIVE same-side effects that plague competitors (congestion, inundation of women by men's messages).
+
+**Q: "Which option should Waldorf choose?"**
+A: [This is the debate question. Be ready to argue any side. The strongest case is probably for a combination of Options 1 and 4, because:]
+- Option 1 (defend core) is necessary in the short term: Chemistry is directly attacking eHarmony's value proposition
+- Option 4 (international) extends the prediction factory to new geographies where the data flywheel can compound
+- Options 2 and 3 are riskier because they require fundamentally different predictions (medium-term compatibility, life-stage guidance) for which eHarmony has no validated algorithm
+- The constraint is resources: "the company could afford to invest in only one or two"
+
+**Q: "What is the role of the algorithm in eHarmony's competitive advantage?"**
+A: The algorithm is the competitive advantage. It is: (1) patented, (2) validated on proprietary data from 4,000+ couples, (3) continuously improved through eHarmony Labs, (4) embedded in an operating model where every other choice (long questionnaire, rejection of applicants, no browsing, Guided Communication, premium pricing) is designed to serve and protect the prediction's quality. Competitors can copy individual features, but replicating the entire complementary system is extremely difficult. Chemistry tried with a different algorithm and methodology, but with lower validation and a different theoretical basis (interpersonal chemistry vs. psychosocial compatibility).`,
+          contentZH: `**問：「eHarmony 的核心業務是什麼？它是平台嗎？」**
+答：eHarmony 是一個在雙邊交友市場中運作的配對平台。但與典型的自助式交友平台（使用者瀏覽並自行選擇）不同，eHarmony 的營運模式圍繞自動化預測而建——一個決定誰與誰配對的專利演算法。使用者無法獨立瀏覽。因此更準確地說，它是一個碰巧以平台形式組織的「預測工廠」，而非一個碰巧使用演算法的平台。
+
+**問：「eHarmony 有什麼資料？」**
+答：[使用上方第二節——準備好快速列舉5-8個類別，然後深入最重要的：個性檔案問卷資料、來自4,000對以上伴侶的演算法驗證資料，以及引導式溝通互動的行為資料。]
+
+**問：「eHarmony 的網路效應從何而來？它們強嗎？」**
+答：最重要的網路效應是資料網路效應：更多使用者 → 更豐富的訓練資料 → 更好的演算法 → 更好的配對品質 → 更高的滿意度 → 更多使用者。也有傳統的跨邊效應（更多男性 → 對女性更有價值，反之亦然），但 eHarmony 的演算法中介並控制這些，不像開放平台中原始數量驅動價值。Waldorf 明確表示他不再相信網路規模有遞減報酬。演算法也緩解了困擾競爭對手的負面同邊效應（壅塞、女性被男性訊息淹沒）。
+
+**問：「Waldorf 應該選哪個選項？」**
+答：[這是辯論題。準備好支持任何一方。最強的論點可能是選項1與4的組合，因為：]
+- 選項1（防守核心）在短期內是必要的：Chemistry 正在直接攻擊 eHarmony 的價值主張
+- 選項4（國際化）將預測工廠擴展至資料飛輪可以複合增長的新地區
+- 選項2和3風險較高，因為它們需要根本不同的預測（中期相容性、人生階段指引），而 eHarmony 並無經過驗證的演算法
+- 限制條件是資源：「公司只能負擔投資一到兩個選項」
+
+**問：「演算法在 eHarmony 的競爭優勢中扮演什麼角色？」**
+答：演算法就是競爭優勢。它是：(1) 受專利保護，(2) 以4,000對以上伴侶的專有資料驗證，(3) 透過 eHarmony Labs 持續改善，(4) 嵌入在一個營運模式中，每個其他選擇（長問卷、拒絕申請者、不可瀏覽、引導式溝通、溢價定價）都是為了服務和保護預測品質。競爭對手可以複製個別功能，但複製整個互補系統極為困難。Chemistry 試圖以不同的演算法和方法論做到，但驗證程度較低且理論基礎不同（人際化學 vs. 心理社會相容性）。`
+        },
+        {
+          titleEN: "Key Exhibits to Know",
+          titleZH: "需熟悉的關鍵附錄",
+          contentEN: `- **Exhibit 1:** Demographics of people with marital events (race, age, education, poverty level breakdowns by gender — useful for understanding market segmentation)
+- **Exhibit 2:** Marriage rates by age 1880-2000 (declining trend; later marriage)
+- **Exhibit 3:** Factors reducing divorce risk (income >$50K: -30%; baby after 7mo+: -24%; over 25: -24%; intact family: -14%; religious: -14%; some college: -13%)
+- **Exhibit 4:** International marriage market comparison (US vs. Canada, UK, France, Germany, Italy, Sweden — critical for evaluating Option 4)
+- **Exhibit 5:** Marriage survival rates by cohort (declining durability over time)
+- **Exhibit 6:** Online dating demographics (18-29: 18% tried; 65+: only 3%)
+- **Exhibit 7:** How couples met (work/school: 38%; family/friends: 34%; social venues: 13%; internet: only 4%)
+- **Exhibit 8:** eHarmony Personality Profile structure (11 sections + picture upload; 258 questions across personality, values, interests)
+- **Exhibits 9-10:** Pricing comparison (eHarmony consistently ~2x Match and Yahoo!)
+- **Exhibit 11:** Price comparison with other subscriptions (eHarmony at $19.95/mo vs. gym $74.99, phone $59.99)
+- **Exhibit 12:** Chemistry Personality Test structure (fewer sections; includes right-hand image analysis and visual game)`,
+          contentZH: `- **附錄1：** 具婚姻事件之人口統計（種族、年齡、教育、貧窮水平按性別分類——有助於理解市場區隔）
+- **附錄2：** 1880-2000年各年齡結婚率（下降趨勢；晚婚）
+- **附錄3：** 降低離婚風險的因素（收入>$50K：-30%；懷孕7個月以上後才結婚：-24%；超過25歲：-24%；完整家庭：-14%；有宗教信仰：-14%；大學以上學歷：-13%）
+- **附錄4：** 國際婚姻市場比較（美國 vs. 加拿大、英國、法國、德國、義大利、瑞典——評估選項4的關鍵）
+- **附錄5：** 各世代婚姻存續率（持久性隨時間下降）
+- **附錄6：** 線上交友人口統計（18-29歲：18%嘗試過；65歲以上：僅3%）
+- **附錄7：** 伴侶如何認識的（工作／學校：38%；家人／朋友：34%；社交場所：13%；網路：僅4%）
+- **附錄8：** eHarmony 個性檔案結構（11個部分 + 照片上傳；258題涵蓋性格、價值觀、興趣）
+- **附錄9-10：** 定價比較（eHarmony 持續約為 Match 和 Yahoo! 的兩倍）
+- **附錄11：** 與其他訂閱服務的價格比較（eHarmony $19.95/月 vs. 健身房 $74.99、手機 $59.99）
+- **附錄12：** Chemistry 個性測試結構（較少部分；包含慣用手影像分析與視覺遊戲）`
+        }
+      ]
+    }
+  ]
 };
 
-const Tag = ({ children, color = "blue" }) => {
-  const c = { blue:"bg-blue-100 text-blue-800", green:"bg-green-100 text-green-800", amber:"bg-amber-100 text-amber-800", red:"bg-red-100 text-red-800", purple:"bg-purple-100 text-purple-800", slate:"bg-slate-200 text-slate-700", rose:"bg-rose-100 text-rose-800", cyan:"bg-cyan-100 text-cyan-800" };
-  return <span className={`${c[color]} text-xs font-semibold px-2 py-0.5 rounded-full`}>{children}</span>;
-};
+export default function EHarmonyPrep() {
+  const [lang, setLang] = useState("both");
+  const [openSections, setOpenSections] = useState(new Set(data.sections.map(s => s.id)));
+  const [openSubs, setOpenSubs] = useState(new Set());
 
-const Arrow = () => <span className="text-slate-400 text-lg mx-1">→</span>;
+  const toggleSection = (id) => {
+    setOpenSections(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
-/* ═══ INTERACTIVE FRAMEWORK COMPONENTS ═══ */
-const PC = { macro:{main:"#2563eb",light:"#eff6ff",dark:"#1d4ed8"}, supra:{main:"#7c3aed",light:"#f5f3ff",dark:"#6d28d9"}, meso:{main:"#059669",light:"#ecfdf5",dark:"#047857"}, industry:{main:"#d97706",light:"#fffbeb",dark:"#b45309"}, firm:{main:"#dc2626",light:"#fef2f2",mid:"#fecaca",dark:"#b91c1c"} };
+  const toggleSub = (key) => {
+    setOpenSubs(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  };
 
-function Num({ n, color }) {
-  return <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:22,height:22,borderRadius:"50%",fontSize:11,fontWeight:700,background:color,color:"#fff",marginRight:8,flexShrink:0 }}>{n}</span>;
-}
+  const expandAll = () => {
+    setOpenSections(new Set(data.sections.map(s => s.id)));
+    const allSubs = new Set();
+    data.sections.forEach(s => s.subsections.forEach((_, i) => allSubs.add(`${s.id}-${i}`)));
+    setOpenSubs(allSubs);
+  };
 
-function Expandable({ items, color, border }) {
-  return (<div style={{ marginTop:8 }}>{items.map((it,j) => (<div key={j} style={{ display:"flex",alignItems:"flex-start",gap:6,padding:"5px 10px",marginBottom:j<items.length-1?3:0,background:"#fff",borderRadius:6,border:`1px solid ${border||color+"22"}`,fontSize:13,color:"#4b5563",lineHeight:1.55 }}><span style={{color,fontWeight:700,flexShrink:0}}>›</span><span>{it}</span></div>))}</div>);
-}
+  const collapseAll = () => {
+    setOpenSections(new Set());
+    setOpenSubs(new Set());
+  };
 
-const IH = ({ children }) => <div style={{fontSize:18,fontWeight:800,textAlign:"center",color:"#0f172a",marginBottom:2}}>{children}</div>;
-const ISub = ({ children }) => <p style={{fontSize:12,color:"#94a3b8",margin:"0 0 14px",textAlign:"center",fontStyle:"italic"}}>{children}</p>;
+  const renderMarkdown = (text) => {
+    if (!text) return null;
+    return text.split("\n").map((line, i) => {
+      let processed = line;
+      // Bold
+      processed = processed.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      // Check if it's a list item
+      const isBullet = processed.match(/^- /);
+      const isNumbered = processed.match(/^\d+\. /);
+      if (isBullet) {
+        processed = processed.replace(/^- /, '');
+        return <div key={i} style={{ paddingLeft: 20, position: 'relative', marginBottom: 4 }}>
+          <span style={{ position: 'absolute', left: 4 }}>•</span>
+          <span dangerouslySetInnerHTML={{ __html: processed }} />
+        </div>;
+      }
+      if (isNumbered) {
+        const match = processed.match(/^(\d+)\. (.*)$/);
+        if (match) {
+          return <div key={i} style={{ paddingLeft: 28, position: 'relative', marginBottom: 4 }}>
+            <span style={{ position: 'absolute', left: 4 }}>{match[1]}.</span>
+            <span dangerouslySetInnerHTML={{ __html: match[2] }} />
+          </div>;
+        }
+      }
+      if (processed.trim() === '') return <div key={i} style={{ height: 8 }} />;
+      return <div key={i} style={{ marginBottom: 4 }} dangerouslySetInnerHTML={{ __html: processed }} />;
+    });
+  };
 
-/* ─── INTERACTIVE PENTAGON ───
-   ★ STRUCTURAL CHANGE #1: Professor's analysis sequence
-   Industry(①) → Meso(②) → Macro(③) → Meta(④) → Firm(⑤)
-   Pentagon shape unchanged (textbook standard), but numbering reflects analytical order
-─── */
-function InteractivePentagon() {
-  const [hover, setHover] = useState(null);
-  const levels = [
-    { key:"industry",n:1,pentIdx:2,title:"① Industry 產業",sub:"Competitive landscape — START HERE 從這裡開始",items:["Industry Characteristics","Competition","Cooperation","Strategic Groups","Lead Firms","Micro Policies","Micro Institutions"],col:PC.industry },
-    { key:"meso",n:2,pentIdx:1,title:"② Meso 群聚",sub:"Cluster & value chain ecosystem",items:["Inputs & Suppliers","Demand & Customers","Shared Resources","Shared Activities","Complementarities","Substitutes","Meso Policies","Meso Institutions"],col:PC.meso },
-    { key:"macro",n:3,pentIdx:0,title:"③ Macro 國家",sub:"National environment",items:["Macroeconomics","National Resources & Capabilities","Gov't Policies","Institutions","Civil Society"],col:PC.macro },
-    { key:"supra",n:4,pentIdx:4,title:"④ Meta 超國家",sub:"Global & international forces",items:["Geopolitics","Global Tech","Global Economics","Social/Env Issues","Multilateral Orgs","Trade Blocs","Foreign Gov'ts","Int'l Financial Flows","Foreign MNCs","Other Groups"],col:PC.supra },
-    { key:"firm",n:5,pentIdx:3,title:"⑤ Firm 企業",sub:"Internal strategy & execution — END HERE 最後才到這裡",col:PC.firm,dual:{left:{heading:"Strategy (SPARK+L)",items:["Scope","Positioning","Activities","Resources","Knowledge","Leadership"]},right:{heading:"Execution",items:["Org & Mgmt","Governance","Firm Policies","Firm Institutions"]}}},
-  ];
+  return (
+    <div style={{ fontFamily: "'Segoe UI', 'Noto Sans TC', Arial, sans-serif", maxWidth: 960, margin: '0 auto', padding: '16px 20px', color: '#1a1a1a', lineHeight: 1.65 }}>
+      {/* Header */}
+      <div style={{ borderBottom: '3px solid #1a365d', paddingBottom: 12, marginBottom: 16 }}>
+        <div style={{ fontSize: 13, color: '#666', fontWeight: 500, letterSpacing: 0.5 }}>
+          MODULE II: DESIGNING A PREDICTION FACTORY — FOUNDATIONS
+        </div>
+        <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
+          模組二：將預測工廠設計入營運模式 — 基礎篇
+        </div>
+        <h1 style={{ fontSize: 24, margin: '8px 0 4px', color: '#1a365d' }}>
+          eHarmony Case Preparation Notes
+        </h1>
+        <div style={{ fontSize: 14, color: '#444' }}>
+          eHarmony 案例準備筆記 &nbsp;|&nbsp; "Weak" AI/ML & Building Algorithms
+        </div>
+        <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>
+          Prof. Kevin Boudreau &nbsp;|&nbsp; Northeastern University &nbsp;|&nbsp; HBS Case 9-709-424
+        </div>
+      </div>
 
-  const cx=150,cy=148,r=115;
-  const pentLabels=["Macro\n國家","Meso\n群聚","Industry\n產業","Firm\n企業","Meta\n超國家"];
-  const pentCols=[PC.macro.main,PC.meso.main,PC.industry.main,PC.firm.main,PC.supra.main];
-  const pentPts=[];
-  for(let i=0;i<5;i++){const a=(Math.PI*2*i)/5-Math.PI/2;pentPts.push({x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)});}
-  const pentKeyMap={};levels.forEach(l=>{pentKeyMap[l.pentIdx]=l.key;});
+      {/* Controls */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 2, background: '#f0f0f0', borderRadius: 6, padding: 2 }}>
+          {[
+            { key: 'en', label: 'EN' },
+            { key: 'zh', label: '中文' },
+            { key: 'both', label: 'Both 雙語' }
+          ].map(opt => (
+            <button key={opt.key} onClick={() => setLang(opt.key)}
+              style={{ padding: '5px 14px', border: 'none', borderRadius: 4, fontSize: 12, fontWeight: 600,
+                background: lang === opt.key ? '#1a365d' : 'transparent',
+                color: lang === opt.key ? '#fff' : '#555', cursor: 'pointer' }}>
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <button onClick={expandAll} style={{ padding: '5px 12px', border: '1px solid #ccc', borderRadius: 4, fontSize: 11, cursor: 'pointer', background: '#fff' }}>
+          Expand All 全展開
+        </button>
+        <button onClick={collapseAll} style={{ padding: '5px 12px', border: '1px solid #ccc', borderRadius: 4, fontSize: 11, cursor: 'pointer', background: '#fff' }}>
+          Collapse All 全收合
+        </button>
+      </div>
 
-  return (<div>
-    <IH>Drivers of Firm Performance 企業績效驅動因素</IH>
-    <ISub>教授分析順序：產業→群聚→國家→超國家→企業 · 互動式：懸停或點擊各層級</ISub>
-    <div style={{background:"#fff",borderRadius:16,padding:16,boxShadow:"0 4px 20px rgba(0,0,0,0.06)",marginBottom:14,display:"flex",justifyContent:"center"}}>
-      <svg viewBox="0 0 300 296" style={{width:"100%",maxWidth:300,height:"auto"}}>
-        <defs><radialGradient id="fpg" cx="50%" cy="48%" r="55%"><stop offset="0%" stopColor="#fff"/><stop offset="100%" stopColor="#f1f5f9"/></radialGradient><filter id="fpds"><feDropShadow dx="0" dy="3" stdDeviation="4" floodOpacity="0.1"/></filter></defs>
-        <polygon points={pentPts.map(p=>`${p.x},${p.y}`).join(" ")} fill="url(#fpg)" stroke="#cbd5e1" strokeWidth="1.5" filter="url(#fpds)"/>
-        {pentPts.map((p,i)=>{const next=pentPts[(i+1)%5];const key=pentKeyMap[i];const isH=hover===key;return <polygon key={i} points={`${cx},${cy} ${p.x},${p.y} ${next.x},${next.y}`} fill={isH?pentCols[i]:"transparent"} opacity={isH?0.12:0} style={{transition:"opacity 0.3s"}}/>;
-        })}
-        {pentPts.map((_,i)=>{const f=0.58;const a=(Math.PI*2*i)/5-Math.PI/2;const mx=cx+r*f*Math.cos(a);const my=cy+r*f*Math.sin(a);const key=pentKeyMap[i];const isH=hover===key;return <text key={i} x={mx} y={my} textAnchor="middle" fontSize={isH?"11":"10"} fill={pentCols[i]} fontWeight="700" opacity={isH?1:0.7} style={{transition:"all 0.3s"}}>{pentLabels[i].split("\n").map((l,li)=><tspan key={li} x={mx} dy={li===0?0:12}>{l}</tspan>)}</text>;})}
-        <circle cx={cx} cy={cy} r="28" fill="#fff" stroke="#94a3b8" strokeWidth="1"/>
-        <text x={cx} y={cy-3} textAnchor="middle" fontSize="10" fontWeight="600" fill="#94a3b8">Firm</text>
-        <text x={cx} y={cy+10} textAnchor="middle" fontSize="12" fontWeight="800" fill="#0f172a">Performance</text>
-      </svg>
-    </div>
-    <div style={{display:"flex",flexDirection:"column",gap:8}}>
-      {levels.map(lv=>{const isH=hover===lv.key;return(
-        <div key={lv.key} onMouseEnter={()=>setHover(lv.key)} onMouseLeave={()=>setHover(null)} onTouchStart={()=>setHover(lv.key)} onTouchEnd={()=>setHover(null)} style={{background:isH?lv.col.light:"#fff",border:`1.5px solid ${isH?lv.col.main+"55":"#e5e7eb"}`,borderRadius:14,padding:"12px 14px",boxShadow:isH?`0 4px 16px ${lv.col.main}15`:"0 1px 4px rgba(0,0,0,0.03)",transition:"all 0.3s ease"}}>
-          <div style={{display:"flex",alignItems:"center",marginBottom:5}}>
-            <Num n={lv.n} color={lv.col.main}/>
-            <div><div style={{color:lv.col.main,fontWeight:700,fontSize:14,lineHeight:1.2}}>{lv.title}</div><div style={{color:"#94a3b8",fontSize:11}}>{lv.sub}</div></div>
+      {/* Sections */}
+      {data.sections.map(section => (
+        <div key={section.id} style={{ marginBottom: 12, border: '1px solid #ddd', borderRadius: 8, overflow: 'hidden' }}>
+          <div
+            onClick={() => toggleSection(section.id)}
+            style={{ padding: '10px 16px', background: openSections.has(section.id) ? '#1a365d' : '#f7f7f7',
+              color: openSections.has(section.id) ? '#fff' : '#1a1a1a', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700 }}>
+                {lang !== 'zh' && section.titleEN}
+                {lang === 'both' && <br />}
+                {lang !== 'en' && <span style={{ fontSize: lang === 'both' ? 13 : 15, opacity: lang === 'both' ? 0.85 : 1 }}>{section.titleZH}</span>}
+              </div>
+              {section.tag && (
+                <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 3, marginTop: 4, display: 'inline-block',
+                  background: openSections.has(section.id) ? 'rgba(255,255,255,0.2)' : '#e6f0ff', color: openSections.has(section.id) ? '#fff' : '#1a365d', fontWeight: 600 }}>
+                  {lang !== 'zh' ? section.tag : section.tagZH}
+                </span>
+              )}
+            </div>
+            <span style={{ fontSize: 18, fontWeight: 300 }}>{openSections.has(section.id) ? '−' : '+'}</span>
           </div>
-          {lv.items ? <div style={{color:"#4b5563",fontSize:13,lineHeight:1.7,paddingLeft:30}}>{lv.items.join("  ·  ")}</div> : (
-            <div style={{display:"flex",gap:20,flexWrap:"wrap",paddingLeft:30}}>
-              {[lv.dual.left,lv.dual.right].map((col,ci)=><div key={ci}><div style={{fontWeight:600,fontSize:11,color:lv.col.dark,marginBottom:2,textTransform:"uppercase",letterSpacing:"0.5px"}}>{col.heading}</div><div style={{fontSize:13,color:"#4b5563",lineHeight:1.7}}>{col.items.join("  ·  ")}</div></div>)}
+
+          {openSections.has(section.id) && (
+            <div style={{ padding: '8px 12px' }}>
+              {section.subsections.map((sub, idx) => {
+                const subKey = `${section.id}-${idx}`;
+                const isOpen = openSubs.has(subKey);
+                return (
+                  <div key={idx} style={{ marginBottom: 6, border: '1px solid #eee', borderRadius: 6 }}>
+                    <div
+                      onClick={() => toggleSub(subKey)}
+                      style={{ padding: '8px 14px', background: isOpen ? '#f0f5ff' : '#fafafa', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: isOpen ? '6px 6px 0 0' : 6 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#2a4a7f' }}>
+                        {lang !== 'zh' && sub.titleEN}
+                        {lang === 'both' && ' / '}
+                        {lang !== 'en' && sub.titleZH}
+                      </div>
+                      <span style={{ fontSize: 14, color: '#999' }}>{isOpen ? '▾' : '▸'}</span>
+                    </div>
+                    {isOpen && (
+                      <div style={{ padding: '10px 16px', fontSize: 13 }}>
+                        {lang !== 'zh' && (
+                          <div style={{ marginBottom: lang === 'both' ? 16 : 0 }}>
+                            {renderMarkdown(sub.contentEN)}
+                          </div>
+                        )}
+                        {lang === 'both' && <hr style={{ border: 'none', borderTop: '1px dashed #ddd', margin: '12px 0' }} />}
+                        {lang !== 'en' && (
+                          <div style={{ color: lang === 'both' ? '#444' : '#1a1a1a' }}>
+                            {renderMarkdown(sub.contentZH)}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
-      );})}
-    </div>
-  </div>);
-}
+      ))}
 
-/* ─── INTERACTIVE FIRM LEVEL ─── */
-function InteractiveFirmLevel() {
-  const [active, setActive] = useState(null);
-  const strat=[{k:"Scope 範疇",d:"Which markets, segments, geographies to compete in 在哪些市場、區隔、地理區域競爭"},{k:"Positioning 定位",d:"Where to position: price, performance, cost 如何在價格、績效、成本上定位"},{k:"Activities 活動",d:"What activities to perform and how to configure them 執行哪些活動及如何配置"},{k:"Resources 資源",d:"What tangible/intangible assets to develop and deploy 開發並部署哪些有形/無形資產"},{k:"Knowledge 知識",d:"What knowledge to create, acquire, and leverage 創造、取得並運用哪些知識"},{k:"Leadership 領導",d:"Who leads and how they set direction 誰領導及如何設定方向"}];
-  const exec=[{k:"Organization & Management 組織與管理",d:"Structure, processes, people, culture 結構、流程、人才、文化"},{k:"Governance 治理",d:"Oversight, incentives, accountability 監督、激勵、問責"},{k:"Firm Policies 企業政策",d:"Internal rules and guidelines 內部規則與準則"},{k:"Firm Institutions 企業制度",d:"Norms, routines, embedded practices 規範、例行程序、嵌入式實踐"}];
-  const ItemCard=({item})=>{const on=active===item.k;return(<div onClick={()=>setActive(on?null:item.k)} style={{background:on?PC.firm.light:"#fff",border:`1px solid ${on?PC.firm.mid:"#e5e7eb"}`,borderRadius:10,padding:"10px 12px",marginBottom:6,cursor:"pointer",transition:"all 0.2s"}}><div style={{fontSize:13,fontWeight:600,color:on?PC.firm.dark:"#1f2937"}}>{item.k}</div>{on&&<div style={{fontSize:12,color:"#6b7280",marginTop:4,lineHeight:1.5}}>{item.d}</div>}</div>);};
-
-  return (<div>
-    <IH>Firm Level Drivers 企業層級驅動因素</IH>
-    <ISub>點擊任何項目查看說明 · Tap any item for description</ISub>
-    <div style={{display:"flex",flexWrap:"wrap",gap:12}}>
-      <div style={{flex:"1 1 200px",minWidth:0}}>
-        <div style={{fontSize:11,fontWeight:700,color:PC.firm.dark,textTransform:"uppercase",letterSpacing:1,marginBottom:8,paddingLeft:4}}>Strategy (SPARK+L)</div>
-        {strat.map(i=><ItemCard key={i.k} item={i}/>)}
-      </div>
-      <div style={{flex:"1 1 200px",minWidth:0}}>
-        <div style={{fontSize:11,fontWeight:700,color:PC.firm.dark,textTransform:"uppercase",letterSpacing:1,marginBottom:8,paddingLeft:4}}>Execution 執行</div>
-        {exec.map(i=><ItemCard key={i.k} item={i}/>)}
-      </div>
-    </div>
-  </div>);
-}
-
-/* ─── INTERACTIVE WHAT IS INDUSTRY ───
-   ★ STRUCTURAL CHANGE #2: 「有用輸出」三步定義法
-─── */
-function InteractiveWhatIsIndustry() {
-  return (<div style={{marginBottom:16}}>
-    <IH>What Constitutes an Industry? 何謂產業？</IH>
-    <ISub>界定競爭的範圍 Defining the boundaries of competition</ISub>
-
-    {/* ★ NEW: 3-step useful output methodology */}
-    <div style={{background:"linear-gradient(135deg,#1e40af,#2563eb)",borderRadius:14,padding:"18px 16px",marginBottom:14,color:"#fff",boxShadow:"0 4px 20px rgba(37,99,235,0.2)"}}>
-      <div style={{fontSize:15,fontWeight:800,textAlign:"center",marginBottom:12}}>「有用輸出」三步定義法 The "Useful Output" Method</div>
-      <div style={{display:"flex",flexDirection:"column",gap:10}}>
-        {[
-          {n:"1",title:"客戶實際收到什麼？",sub:"What useful output does the customer receive?",detail:"不看技術、不看產業代碼，只看最終到達客戶手中的產品或服務的形式與功能。",ex:"手機用戶收到的是：行動通訊 + 應用程式 + 隨身運算"},
-          {n:"2",title:"誰在直接爭奪這個客戶？",sub:"Who competes directly for that customer?",detail:"提供相同有用輸出的所有企業，無論底層技術或商業模式多不同，都在同一產業。",ex:"iOS 與 Android：軟體工程完全不同，但客戶收到同樣的有用輸出 → 同一產業"},
-          {n:"3",title:"劃定產業邊界",sub:"Draw the industry boundary",detail:"不同有用輸出 = 不同產業。即便企業都被歸類為「科技」，只要主業輸出不同就不是同產業。",ex:"Amazon（物流/零售）、Microsoft（生產力工具）、Meta（社群媒體）→ 三個不同產業"},
-        ].map(step=>(
-          <div key={step.n} style={{background:"rgba(255,255,255,0.12)",borderRadius:10,padding:"12px 14px",borderLeft:"3px solid rgba(255,255,255,0.5)"}}>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-              <span style={{background:"#fff",color:"#1e40af",width:22,height:22,borderRadius:"50%",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,flexShrink:0}}>{step.n}</span>
-              <div><div style={{fontWeight:700,fontSize:14}}>{step.title}</div><div style={{fontSize:11,color:"rgba(255,255,255,0.7)"}}>{step.sub}</div></div>
-            </div>
-            <div style={{fontSize:12,color:"rgba(255,255,255,0.9)",lineHeight:1.6,paddingLeft:30,marginBottom:4}}>{step.detail}</div>
-            <div style={{fontSize:11,color:"#fbbf24",paddingLeft:30,fontStyle:"italic"}}>例：{step.ex}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-
-    {/* Original definition section */}
-    <div style={{background:"#fff",borderRadius:14,border:"2px solid #2563eb22",padding:"16px 14px",marginBottom:12,boxShadow:"0 2px 12px rgba(37,99,235,0.06)"}}>
-      <div style={{display:"flex",alignItems:"center",marginBottom:10}}>
-        <div style={{width:26,height:26,borderRadius:8,background:"linear-gradient(135deg,#2563eb,#3b82f6)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:13,fontWeight:700,marginRight:10,flexShrink:0}}>✓</div>
-        <div style={{fontSize:15,fontWeight:700,color:"#1e40af"}}>An Industry Includes 產業包含</div>
-      </div>
-      <div style={{paddingLeft:36,display:"flex",flexDirection:"column",gap:6}}>
-        {[<span>Products/services with <b style={{color:"#1e40af"}}>similar form and function</b> in <b style={{color:"#1e40af"}}>direct competition</b><br/><span style={{fontSize:11,color:"#64748b"}}>形式與功能相似且直接競爭的產品／服務</span></span>,<span>The <b style={{color:"#1e40af"}}>firms</b> that provide these products and services<br/><span style={{fontSize:11,color:"#64748b"}}>提供這些產品與服務的企業</span></span>].map((txt,i)=>(<div key={i} style={{fontSize:13,color:"#374151",lineHeight:1.6,paddingLeft:12,borderLeft:"3px solid #3b82f6"}}>{txt}</div>))}
-      </div>
-    </div>
-    <div style={{background:"#fffbeb",borderRadius:14,border:"2px solid #d9770622",padding:"16px 14px",boxShadow:"0 2px 12px rgba(217,119,6,0.06)"}}>
-      <div style={{display:"flex",alignItems:"center",marginBottom:10}}>
-        <div style={{width:26,height:26,borderRadius:8,background:"linear-gradient(135deg,#d97706,#f59e0b)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:13,fontWeight:700,marginRight:10,flexShrink:0}}>!</div>
-        <div style={{fontSize:15,fontWeight:700,color:"#92400e"}}>Key Notes 重要事項</div>
-      </div>
-      <div style={{display:"flex",flexDirection:"column",gap:5}}>
-        {["Implies a particular set of customers 意味著特定的客戶群","Does not generally conform to standard industry codes 通常不符合標準產業代碼","Industry boundaries may shift over time 產業邊界可能隨時間改變","Same product may appear in different industries if different customers buy for different purposes 若不同客戶因不同目的購買，同一產品可能出現在不同產業"].map((txt,i)=>(<div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"8px 12px",background:"#fff",borderRadius:8,border:"1px solid #fde68a"}}><Num n={i+1} color="#d97706"/><span style={{fontSize:13,color:"#4b5563",lineHeight:1.55}}>{txt}</span></div>))}
-      </div>
-    </div>
-  </div>);
-}
-
-/* ─── INTERACTIVE INDUSTRY DETAIL ─── */
-function InteractiveIndustryDetail() {
-  const [open, setOpen] = useState(null);
-  const sections=[
-    {key:"ic",title:"Industry Characteristics 產業特性",color:"#0369a1",border:"#bae6fd",items:["Relevant segments, activities, resources, knowledge 相關區隔、活動、資源、知識","Relevant technologies and processes 相關技術與流程","Geographic scope of competition 競爭的地理範圍"]},
-    {key:"comp",title:"Competition 競爭",color:"#b91c1c",border:"#fecaca",items:["Ferocity of competition 競爭的激烈程度","Nature of competition 競爭的本質","Identity of competitors 競爭者身分","Strategies of competitors 競爭者策略","Capabilities of competitors 競爭者能力"]},
-    {key:"coop",title:"Cooperation 合作",color:"#059669",border:"#a7f3d0",items:["Scope for cooperation with competitors 與競爭者合作的空間","Alliances 聯盟","Joint development or marketing 聯合開發或行銷","Lobbying 遊說","Other joint activities 其他聯合活動"]},
-    {key:"sg",title:"Strategic Grouping 策略群組",color:"#7c3aed",border:"#ddd6fe",items:["Groups of firms with similar strategies 策略相似的企業群組","Interaction within and between groups 群組內及群組間的互動"]},
-    {key:"lf",title:"Lead Firms 領導企業",color:"#d97706",border:"#fde68a",items:["Strength 實力","Behavior 行為"]},
-  ];
-  return (<div style={{marginBottom:16}}>
-    <IH>Industry Drivers — Interactive Detail 產業驅動因素——互動詳解</IH>
-    <ISub>點擊展開各類別 · Tap each category to expand</ISub>
-    <div style={{display:"flex",flexDirection:"column",gap:6}}>
-      {sections.map(sec=>{const on=open===sec.key;return(
-        <div key={sec.key} onClick={()=>setOpen(on?null:sec.key)} style={{background:on?`${sec.color}08`:"#fff",border:`1.5px solid ${on?sec.color+"44":"#e5e7eb"}`,borderRadius:12,padding:"12px 14px",cursor:"pointer",boxShadow:on?`0 4px 14px ${sec.color}10`:"0 1px 3px rgba(0,0,0,0.03)",transition:"all 0.25s ease"}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <div style={{width:10,height:10,borderRadius:"50%",background:sec.color,boxShadow:on?`0 0 8px ${sec.color}55`:"none",transition:"box-shadow 0.3s"}}/>
-              <span style={{fontSize:14,fontWeight:700,color:on?sec.color:"#374151",transition:"color 0.2s"}}>{sec.title}</span>
-              <span style={{fontSize:11,color:"#94a3b8",fontWeight:500}}>({sec.items.length})</span>
-            </div>
-            <span style={{fontSize:14,color:"#94a3b8",transform:on?"rotate(180deg)":"rotate(0deg)",transition:"transform 0.25s",display:"inline-block"}}>▾</span>
-          </div>
-          {on && <Expandable items={sec.items} color={sec.color} border={sec.border}/>}
+      {/* Footer */}
+      <div style={{ marginTop: 20, padding: '12px 16px', background: '#f9f9f9', borderRadius: 6, fontSize: 11, color: '#888', borderLeft: '3px solid #1a365d' }}>
+        <div style={{ fontWeight: 600, marginBottom: 4, color: '#555' }}>
+          TAGGING LEGEND 標籤說明
         </div>
-      );})}
-    </div>
-  </div>);
-}
-
-/* ─── INTERACTIVE COMPETITION SPECTRUM ─── */
-function InteractiveCompetition() {
-  const [exp, setExp] = useState(null);
-  const types=[
-    {key:"mono",label:"Monopoly 獨佔",color:"#7c3aed",items:["No competition 無競爭","Most favorable unless limited by regulation 除非受法規限制，否則最有利"]},
-    {key:"oligo",label:"Oligopoly 寡佔",color:"#2563eb",items:["Competition among limited number of firms 有限數量企業間的競爭","Recognition of interdependence 認知到相互依存"]},
-    {key:"hyper",label:"Hypercompetition 超競爭",color:"#d97706",items:["Several firms, potential new entrants 數家企業，潛在新進者","Firms may distinguish themselves for short period 企業可能短暫地區分自己"]},
-    {key:"segment",label:"Segmented Competition 區隔競爭",color:"#475569",items:["Multiple segments with distinct buyer groups 多個區隔各有不同買方群體","Different price/performance packages 不同的價格/績效組合","Potential pricing flexibility within segments 區隔內有定價彈性","Competition dynamics differ across segments 各區隔競爭動態不同"]},
-    {key:"perfect",label:"Perfect Competition 完全競爭",color:"#ea580c",items:["Many firms that cannot distinguish themselves 許多無法區分自己的企業","Price competition only 僅有價格競爭"]},
-    {key:"subsid",label:"Subsidized Competition 補貼競爭",color:"#dc2626",items:["Money-losing firms kept in business 虧損企業被維持營運","Competition on price 價格競爭"]},
-  ];
-  const spectrum=[{label:"Subsidized",color:"#dc2626",x:35},{label:"Perfect",color:"#ea580c",x:130},{label:"Hyper",color:"#d97706",x:225},{label:"Segmented",color:"#475569",x:310},{label:"Oligopoly",color:"#2563eb",x:395},{label:"Monopoly",color:"#7c3aed",x:465}];
-
-  return (<div style={{marginBottom:16}}>
-    <IH>Types of Competition 競爭類型</IH>
-    <ISub>點擊查看特徵 · Tap each type to see characteristics</ISub>
-    <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:16}}>
-      {types.map(t=>{const on=exp===t.key;return(
-        <div key={t.key} onClick={()=>setExp(on?null:t.key)} style={{display:"flex",alignItems:"flex-start",gap:12,padding:"12px 14px",borderRadius:12,cursor:"pointer",background:on?`${t.color}08`:"#fff",border:`1.5px solid ${on?t.color+"44":"#e5e7eb"}`,boxShadow:on?`0 4px 14px ${t.color}10`:"0 1px 3px rgba(0,0,0,0.03)",transition:"all 0.25s ease"}}>
-          <div style={{width:12,height:12,borderRadius:"50%",backgroundColor:t.color,flexShrink:0,marginTop:3,boxShadow:on?`0 0 10px ${t.color}55`:"none",transition:"box-shadow 0.3s"}}/>
-          <div style={{flex:1}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <span style={{fontWeight:700,fontSize:14,color:on?t.color:"#1f2937",transition:"color 0.2s"}}>{t.label}</span>
-              <span style={{fontSize:14,color:"#94a3b8",transform:on?"rotate(180deg)":"rotate(0deg)",transition:"transform 0.25s",display:"inline-block"}}>▾</span>
-            </div>
-            {on && <Expandable items={t.items} color={t.color}/>}
-          </div>
-        </div>
-      );})}
-    </div>
-    <div style={{background:"#fff",borderRadius:14,border:"1.5px solid #e2e8f0",padding:"18px 12px",boxShadow:"0 2px 12px rgba(0,0,0,0.04)"}}>
-      <div style={{fontSize:15,fontWeight:700,textAlign:"center",color:"#0f172a",marginBottom:4}}>Where is the Industry? 產業在哪裡？</div>
-      <p style={{fontSize:11,color:"#94a3b8",textAlign:"center",margin:"0 0 10px"}}>將你的產業定位在光譜上 Position your industry on the spectrum</p>
-      <svg viewBox="0 0 500 80" style={{width:"100%",height:"auto"}}>
-        <defs><linearGradient id="cgrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#dc2626"/><stop offset="30%" stopColor="#d97706"/><stop offset="60%" stopColor="#475569"/><stop offset="80%" stopColor="#2563eb"/><stop offset="100%" stopColor="#7c3aed"/></linearGradient></defs>
-        <rect x="30" y="18" width="440" height="6" rx="3" fill="#e2e8f0"/>
-        <rect x="30" y="18" width="440" height="6" rx="3" fill="url(#cgrad)" opacity="0.6"/>
-        {spectrum.map((sp,i)=><g key={i}><circle cx={sp.x} cy="21" r="7" fill={sp.color} stroke="#fff" strokeWidth="2.5"/><text x={sp.x} y="46" textAnchor="middle" fontSize="9" fill={sp.color} fontWeight="700">{sp.label}</text></g>)}
-        <text x="30" y="70" fontSize="9" fill="#94a3b8">← 競爭多 More competition</text>
-        <text x="470" y="70" fontSize="9" fill="#94a3b8" textAnchor="end">Less competition 競爭少 →</text>
-      </svg>
-    </div>
-  </div>);
-}
-
-/* ─── NEW: INTERACTIVE INDUSTRY ECONOMICS ───
-   ★ STRUCTURAL CHANGE #3: Dynamic industry economics analysis
-   Not "what are current margins" but "why is profit structurally possible"
-─── */
-function InteractiveIndustryEconomics() {
-  const [open, setOpen] = useState(null);
-  const questions = [
-    { key:"why", title:"Why is profit POSSIBLE here? 利潤為何在此產業有可能存在？", color:"#059669", border:"#a7f3d0",
-      items:[
-        "Which departures from perfect competition exist? 存在哪些偏離完全競爭的條件？",
-        "Entry barriers: scale, learning, scope, brands, patents, regulation, retaliation 進入障礙有哪些？",
-        "Exit barriers: specialized assets, strategic/emotional barriers, exit costs 退出障礙有哪些？",
-        "Information asymmetries between firms and/or customers 企業與客戶之間的資訊不對稱？",
-        "Are products differentiable or homogeneous? 產品可區分還是同質？",
-      ]},
-    { key:"where", title:"Where does profit COME FROM? 利潤的來源是什麼？", color:"#2563eb", border:"#bfdbfe",
-      items:[
-        "Price premiums from differentiation (brand, quality, features)? 差異化帶來的價格溢價？",
-        "Cost advantages from scale, learning, scope, or resource access? 規模、學習、範圍或資源取得帶來的成本優勢？",
-        "Customer switching costs or lock-in? 客戶的轉換成本或鎖定效應？",
-        "Regulatory protection or government policies? 法規保護或政府政策？",
-        "Network effects or platform dynamics? 網路效應或平台動態？",
-        "Control of scarce inputs, distribution, or complementary assets? 稀缺投入、配銷或互補資產的控制？",
-      ]},
-    { key:"shift", title:"What SHIFTS would change the profit structure? 哪些變動會改變利潤結構？", color:"#dc2626", border:"#fecaca",
-      items:[
-        "New entrants overcoming barriers (technology change, regulation change)? 新進者克服障礙（技術變革、法規變革）？",
-        "Substitutes emerging from adjacent industries? 鄰近產業出現替代品？",
-        "Buyer or supplier power shifting (consolidation, vertical integration)? 買方或供應商權力變化？",
-        "Competition type migrating on the spectrum (e.g., oligopoly → hypercompetition)? 競爭類型在光譜上遷移？",
-        "Macro/Meta forces disrupting the structure (trade policy, technology waves, geopolitics)? 宏觀/超國家力量衝擊結構？",
-        "Lead firms changing strategy or new lead firms emerging? 領導企業策略改變或新領導企業出現？",
-      ]},
-  ];
-
-  return (<div style={{marginBottom:16}}>
-    <IH>Industry Economics 產業經濟學</IH>
-    <ISub>不是靜態描述現況——而是利潤結構如何成形、為何持續、何時改變</ISub>
-    <div style={{background:"#fef2f2",border:"2px solid #dc262622",borderRadius:14,padding:"12px 14px",marginBottom:12}}>
-      <div style={{fontSize:13,fontWeight:700,color:"#991b1b",textAlign:"center",marginBottom:4}}>⚠️ 常見錯誤 Common Mistake</div>
-      <div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"center"}}>
-        <div style={{background:"#fff",border:"1px solid #fca5a5",borderRadius:8,padding:"6px 12px",fontSize:12}}><span style={{color:"#dc2626",fontWeight:700}}>✗</span> 把 Industry Economics 當成「現在利潤率多少」</div>
-        <div style={{background:"#fff",border:"1px solid #86efac",borderRadius:8,padding:"6px 12px",fontSize:12}}><span style={{color:"#16a34a",fontWeight:700}}>✓</span> 問「利潤為何結構性地有可能？從哪來？什麼會改變它？」</div>
+        <div><strong>[FACT]</strong> — Directly from case text 直接引自案例文本</div>
+        <div><strong>[INFERENCE]</strong> — Analytical extension from case facts 由案例事實延伸的分析推論</div>
+        <div><strong>[CLASS LENS]</strong> — Application of Boudreau's course frameworks 應用 Boudreau 教授的課程框架</div>
       </div>
-    </div>
-    <div style={{display:"flex",flexDirection:"column",gap:8}}>
-      {questions.map(q=>{const on=open===q.key;return(
-        <div key={q.key} onClick={()=>setOpen(on?null:q.key)} style={{background:on?`${q.color}06`:"#fff",border:`1.5px solid ${on?q.color+"44":"#e5e7eb"}`,borderRadius:12,padding:"12px 14px",cursor:"pointer",boxShadow:on?`0 4px 14px ${q.color}10`:"0 1px 3px rgba(0,0,0,0.03)",transition:"all 0.25s ease"}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <span style={{fontSize:14,fontWeight:700,color:on?q.color:"#374151",transition:"color 0.2s",flex:1}}>{q.title}</span>
-            <span style={{fontSize:14,color:"#94a3b8",transform:on?"rotate(180deg)":"rotate(0deg)",transition:"transform 0.25s",display:"inline-block",flexShrink:0,marginLeft:8}}>▾</span>
-          </div>
-          {on && <Expandable items={q.items} color={q.color} border={q.border}/>}
-        </div>
-      );})}
-    </div>
-  </div>);
-}
-
-/* ═══════════════════════════════════════
-   TAB CONTENT
-   ═══════════════════════════════════════ */
-
-function Overview() {
-  return (<div>
-    <SectionTitle cn="考試資訊與作答方式">Exam Info & How to Write</SectionTitle>
-    <Card title="Exam Structure (from Practice Exam)" cn="考試結構（來自練習考題）" color="blue">
-      <div className="grid grid-cols-3 gap-3 mb-3">
-        {[{q:"Q1",t:"Five Levels",w:"25%",m:"30 min"},{q:"Q2",t:"VRIO → ARK",w:"25%",m:"30 min"},{q:"Q3",t:"ETA/Swatch",w:"25%",m:"30 min"}].map(x=>(<div key={x.q} className="bg-white border rounded-lg p-3 text-center"><div className="font-bold text-blue-700 text-lg">{x.q}</div><div className="text-xs font-semibold">{x.t}</div><div className="text-xs text-slate-500">{x.w} · {x.m}</div></div>))}
-      </div>
-      <div className="bg-amber-50 border border-amber-300 rounded p-2 text-xs">⚠️ Total shown = 75%. Expect a <strong>4th unseen question (25%)</strong>. Prepare to apply Five Levels + SPARK to an unfamiliar scenario.</div>
-    </Card>
-    <Card title="The Single Governing Logic" cn="整門課唯一主線" color="green">
-      <div className="bg-white rounded-lg p-4 text-center border">
-        <div className="text-lg font-bold text-green-800 mb-2">Understand and improve firm performance</div>
-        <div className="text-sm text-slate-600 mb-3">理解並改善企業績效</div>
-        <div className="flex flex-wrap justify-center gap-2">
-          <Tag color="green">Performance is RELATIVE 相對概念</Tag><Tag color="green">Comprehensive 全面</Tag><Tag color="green">Integrative 整合</Tag><Tag color="green">Dynamic 動態</Tag><Tag color="green">Question-based 問題導向</Tag>
-        </div>
-      </div>
-    </Card>
-    <Card title="Strategy in This Course (Ch.1)" cn="本課程的策略定義" color="purple">
-      <div className="flex items-center justify-center flex-wrap gap-1 text-xs font-semibold">
-        <Tag color="purple">Create value for customers</Tag><span className="text-purple-400">+</span><Tag color="purple">Beat competitors</Tag><span className="text-purple-400">+</span><Tag color="purple">Get paid for it</Tag>
-      </div>
-      <div className="mt-3 flex items-center justify-center flex-wrap gap-1 text-xs"><Tag color="slate">Analysis</Tag><Arrow /><Tag color="slate">Decisions</Tag><Arrow /><Tag color="slate">Action / Execution</Tag><Arrow /><Tag color="slate">Leadership</Tag></div>
-      <p className="mt-3 text-xs text-center text-slate-500">No "magic bullets." Strategy is both big picture AND detailed plans for execution.</p>
-    </Card>
-    <Card title="6-Step Answer Formula" cn="六步作答公式（依教材要求推論）" color="amber">
-      <div className="space-y-2">
-        {[["1","State the performance issue","點出績效問題"],["2","Identify the dominant level","指出關鍵層級"],["3","Name specific drivers","列出具體 driver"],["4","Explain HOW → mechanism","解釋作用機制"],["5","Cross-level linkage","跨層級連結"],["6","Judge: positive/negative? Persist?","判斷正負＋趨勢"]].map(([n,en,cn])=>(<div key={n} className="flex items-start gap-2"><div className="bg-amber-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0">{n}</div><div><span className="font-semibold text-sm">{en}</span> <span className="text-xs text-slate-500">{cn}</span></div></div>))}
-      </div>
-    </Card>
-    <Card title="Weak vs. Strong" cn="弱答 vs. 強答" color="red">
-      <table className="w-full text-xs"><thead><tr><th className="text-left pb-1 text-red-700">Weak ✗</th><th className="text-left pb-1 text-green-700">Strong ✓</th></tr></thead>
-      <tbody className="divide-y">
-        {[["Defines concepts only","Applies to specific case"],['"Competition was intense"',"WHY intense, HOW changed profitability"],['"Resources mattered"',"WHICH, why V-R-I, organized to exploit?"],["Static snapshot","Trend + future direction"],["One level only","Cross-level connection"],["Generic conclusion","Crisp judgment on performance"]].map(([w,s],i)=>(<tr key={i}><td className="py-1 pr-2 text-red-600">{w}</td><td className="py-1 text-green-700">{s}</td></tr>))}
-      </tbody></table>
-    </Card>
-  </div>);
-}
-
-function FiveLevels() {
-  return (<div>
-    <SectionTitle cn="五層架構——互動圖表 + 詳細參考">The Five-Level Framework</SectionTitle>
-    <div className="mb-6"><InteractivePentagon /></div>
-    <Card title="Three Critical Insights (Ch.2)" cn="三大洞察" color="blue">
-      <div className="grid grid-cols-3 gap-2">
-        {[["Systemic 系統性","Levels interdependent; changes cascade"],["Changing 持續變動","Must project forward, not snapshot"],["Interdependent 相互依存","Favorable macro ≠ firm success if micro/firm unfavorable"]].map(([t,d])=>(<div key={t} className="bg-white border rounded p-3 text-center"><div className="font-bold text-blue-700 text-sm mb-1">{t}</div><div className="text-xs text-slate-600">{d}</div></div>))}
-      </div>
-    </Card>
-    <Card title="Levels AND Trends (Ch.2)" cn="水準與趨勢" color="amber">
-      <div className="text-center font-semibold">"Better might still not be good. Worse might still not be bad."</div>
-      <div className="text-center text-xs text-slate-500 mt-1">變好不一定真的好，變差也不一定真的壞</div>
-    </Card>
-    <Card title="Q1 Template" cn="Q1 快速作答模板" color="green">
-      <div className="bg-white border rounded p-3 text-sm italic">"At the [level], the crucial driver was [X]. This mattered because [mechanism]. It influenced profitability by [price / cost / demand / bargaining / entry / rivalry]. The impact was [positive / negative], and the trend was [direction]."</div>
-      <div className="mt-2 bg-red-50 border border-red-300 rounded p-2 text-xs">⚠️ Q1 requires 5 different cases, one per level. Only Stitch Fix and Seiko are in files. <strong>Fill 3 more from your Session 1–8 class notes.</strong></div>
-    </Card>
-  </div>);
-}
-
-function SparkPosition() {
-  return (<div>
-    <SectionTitle cn="SPARK 架構與定位分析">SPARK Model & Positioning</SectionTitle>
-    <div className="mb-6 bg-white rounded-xl p-4 border border-slate-200"><InteractiveFirmLevel /></div>
-    <div className="bg-gradient-to-br from-green-800 to-green-900 text-white rounded-xl p-5 mb-4">
-      <div className="text-center font-bold text-xl mb-1">Strategy = SPARK</div>
-      <div className="text-center text-green-300 text-xs mb-4">Ch.3 — The core firm-level analytical tool</div>
-      <div className="space-y-2">
-        {[{l:"S",w:"cope",q:"WHERE do we compete?",cn:"在哪裡？",d:"Industries, segments, geography",c:"bg-green-700"},{l:"P",w:"ositioning",q:"HOW do we compete?",cn:"怎麼競爭？",d:"Price/performance + cost + vs. competitors",c:"bg-green-600"},{l:"A",w:"ctivities",q:"What do we DO?",cn:"做什麼？",d:"Tasks to serve customers",c:"bg-emerald-700"},{l:"R",w:"esources",q:"What do we HAVE?",cn:"有什麼？",d:"Brands, patents, workforce, facilities, financial",c:"bg-emerald-600"},{l:"K",w:"nowledge",q:"What do we KNOW?",cn:"知道什麼？",d:"Market, tech, competitor, process, organizational",c:"bg-teal-700"}].map(s=>(<div key={s.l} className={`${s.c} rounded-lg p-3 flex items-center gap-3`}><div className="text-3xl font-black text-green-200 w-8">{s.l}</div><div className="flex-1"><div className="flex items-baseline gap-2"><span className="font-bold">{s.l}<span className="font-normal">{s.w}</span></span><span className="text-green-300 text-xs">{s.q} {s.cn}</span></div><div className="text-xs text-green-200 mt-0.5">{s.d}</div></div></div>))}
-      </div>
-      <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs"><div className="bg-green-700 rounded p-2"><strong>S</strong> determines WHERE</div><div className="bg-green-700 rounded p-2"><strong>P + A</strong> determine HOW</div><div className="bg-green-700 rounded p-2"><strong>R + K</strong> determine WITH WHAT</div></div>
-      <div className="mt-2 text-center text-xs text-green-300">High-performing firms often have a distinctive SPARK.</div>
-    </div>
-    <Card title="Positioning: The Full Picture (Ch.3)" cn="定位分析——最容易考、最容易寫錯" color="red">
-      <div className="bg-red-50 border border-red-200 rounded p-3 mb-3 text-center">
-        <div className="font-bold text-red-700">You CANNOT judge positioning from:</div>
-        <div className="flex justify-center gap-4 mt-2"><div className="bg-white border border-red-300 rounded px-3 py-1 text-sm">Price/Performance alone ✗</div><div className="bg-white border border-red-300 rounded px-3 py-1 text-sm">Cost/Performance alone ✗</div></div>
-        <div className="mt-2 font-bold text-green-700">Only MARGIN (Price − Cost) reveals truth ✓</div>
-      </div>
-      <div className="grid grid-cols-3 gap-2 mb-3">
-        {[{f:"Firm B",p:"Below avg",c:"Very low",pr:"Above avg ✓",st:"Cost Leader",cl:"border-blue-400 bg-blue-50"},{f:"Firm C",p:"High",c:"Slightly high",pr:"Above avg ✓",st:"Differentiator",cl:"border-purple-400 bg-purple-50"},{f:"Firm D",p:"High",c:"Low",pr:"Highest ✓✓",st:"Rare: IP/scale/platform",cl:"border-green-400 bg-green-50"}].map(f=>(<div key={f.f} className={`border-2 ${f.cl} rounded-lg p-3 text-center`}><div className="font-bold text-sm">{f.f}</div><div className="text-xs mt-1">Price: {f.p}</div><div className="text-xs">Cost: {f.c}</div><div className="text-xs font-bold mt-1">Profit: {f.pr}</div><div className="text-xs text-slate-500 mt-1">{f.st}</div></div>))}
-      </div>
-      <div className="text-xs text-slate-600">Why not all Firm D? Smart competitors + inherent tradeoffs. Exceptions: IP as standard (Microsoft), massive scale (Intel), resource advantages (Saudi Aramco), platform (Google/Facebook).</div>
-    </Card>
-    <Card title="A-R-K Advantage Logic" cn="活動-資源-知識的優勢邏輯" color="purple">
-      <div className="space-y-2"><div className="bg-red-50 border-l-2 border-red-400 p-2 text-xs"><strong>NOT enough:</strong> "We are better at marketing"</div><div className="bg-green-50 border-l-2 border-green-400 p-2 text-xs"><strong>IS enough:</strong> "We are better at marketing <em>and therefore customers pay us a price premium</em>"</div></div>
-      <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs"><div className="bg-purple-100 rounded p-2"><strong>Individual</strong> A, R, or K</div><div className="bg-purple-200 rounded p-2"><strong>Combinations</strong> of A+R+K</div><div className="bg-purple-300 rounded p-2"><strong>Systems</strong> (hardest to imitate)</div></div>
-    </Card>
-    <Card title="Time Dimension (Ch.3)" cn="策略的時間面向" color="cyan">
-      <div className="grid grid-cols-3 gap-2 text-xs">
-        {[{t:"Commitment",d:"Large investment → long-term advantage",ex:"Chemicals, pharma, oil, mining"},{t:"Hustle",d:"Stream of temporary advantages, move fast",ex:"Motion pictures, fashion, trading, some tech"},{t:"Real Options",d:"Stay in game without big commitment",ex:"High uncertainty + irreversibility"}].map(s=>(<div key={s.t} className="bg-white border rounded p-3"><div className="font-bold text-cyan-700">{s.t}</div><div className="mt-1">{s.d}</div><div className="mt-1 text-slate-500 italic">{s.ex}</div></div>))}
-      </div>
-      <div className="mt-2 text-xs text-slate-500"><strong>Time pacing:</strong> New products on set schedule. Fashion 2x/yr; PC every 6 mo.</div>
-    </Card>
-    <Card title="General vs. Specific Competitive Advantages (Ch.3)" cn="一般性 vs. 特定性競爭優勢" color="amber">
-      <div className="grid grid-cols-2 gap-3 text-xs">
-        <div className="bg-amber-50 border rounded p-3"><div className="font-bold text-amber-700 mb-1">General 一般性</div><div>Built up over time: R&D capabilities, brands, manufacturing excellence.</div></div>
-        <div className="bg-amber-50 border rounded p-3"><div className="font-bold text-amber-700 mb-1">Specific 特定性</div><div>Why the company succeeds or fails TODAY in a specific industry, with specific customers, against specific competitors.</div></div>
-      </div>
-      <div className="mt-2 text-xs text-center">Hustle strategy = generating general advantages to produce the stream of specific advantages needed to compete immediately.</div>
-    </Card>
-    <Card title="Scope Combinations (Ch.3, Fig 3.1)" cn="範疇組合矩陣" color="slate">
-      <div className="grid grid-cols-2 gap-3"><div className="grid grid-cols-2 gap-1 text-xs">{["Local Diversifier","Global Diversifier","Local Specialist","Global Specialist"].map(s=>(<div key={s} className="bg-slate-100 border rounded p-2 text-center">{s}</div>))}</div><div className="grid grid-cols-2 gap-1 text-xs">{["Local Broadline","Global Broadline","Local Focus","Global Focus"].map(s=>(<div key={s} className="bg-slate-100 border rounded p-2 text-center">{s}</div>))}</div></div>
-      <div className="mt-2 text-xs text-slate-500">No single right scope. Optimal depends on industry, geography, and firm strategy.</div>
-    </Card>
-    <Card title="Activities & Resources Lists (Lecture Ch.3)" cn="活動與資源清單" color="green">
-      <div className="grid grid-cols-2 gap-3 text-xs">
-        <div><div className="font-semibold text-green-700 mb-1">Activities 活動:</div><div className="flex flex-wrap gap-1">{["Product/Service Dev","Production","Logistics","Sales & Marketing","Customer Service","Accounting","Finance","HR Management","Strategy Setting"].map(a=>(<span key={a} className="bg-green-50 border border-green-200 rounded px-1.5 py-0.5">{a}</span>))}</div></div>
-        <div><div className="font-semibold text-green-700 mb-1">Resources 資源:</div><div className="flex flex-wrap gap-1">{["Natural Resources","Financial Resources","Human Resources","Physical Assets","Locations","Patents","Brands","Reputation","Org Resources"].map(r=>(<span key={r} className="bg-green-50 border border-green-200 rounded px-1.5 py-0.5">{r}</span>))}</div></div>
-      </div>
-    </Card>
-    <Card title="Signals of Value (Ch.3)" cn="價值訊號——影響顧客願付價格" color="rose">
-      <div className="flex flex-wrap gap-1 text-xs">{["Brands","Installed base / existing customers","Celebrity endorsements","Awards (industry, trade)","Independent certification (ISO, etc.)","Price as signal of quality","Customer education"].map(s=>(<span key={s} className="bg-rose-50 border border-rose-200 rounded px-2 py-1">{s}</span>))}</div>
-      <div className="mt-2 text-xs text-slate-500">Price can signal exclusivity — raising price can sometimes increase sales (e.g., NZ wine, luxury goods).</div>
-    </Card>
-  </div>);
-}
-
-function IndustryTab() {
-  return (<div>
-    <SectionTitle cn="產業層級分析——互動圖表 + 詳細參考">Industry-Level Analysis (Ch.4)</SectionTitle>
-    <InteractiveWhatIsIndustry />
-    <InteractiveIndustryDetail />
-    <InteractiveCompetition />
-
-    {/* ★ NEW: Industry Economics dynamic analysis */}
-    <InteractiveIndustryEconomics />
-
-    <div className="mt-2 mb-3 text-center"><span className="text-xs font-bold text-slate-400 uppercase tracking-widest">▼ Detailed Reference 詳細參考 ▼</span></div>
-
-    <Card title="Industry Definition — CRITICAL" cn="產業定義——極為關鍵" color="red">
-      <div className="bg-white border-2 border-red-300 rounded-lg p-4 text-center mb-3">
-        <div className="font-bold text-red-700 mb-2">Products/services with SIMILAR FORM AND FUNCTION in DIRECT COMPETITION</div>
-        <div className="text-xs text-slate-600">Focus on "useful output" to customers. NOT statistical codes. Boundaries shift.</div>
-      </div>
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        <div className="bg-green-50 border border-green-300 rounded p-2">✓ iPhone + Android = same industry (smartphones — same useful output)</div>
-        <div className="bg-red-50 border border-red-300 rounded p-2">✗ Amazon + Microsoft + Meta ≠ same industry (different primary outputs)</div>
-      </div>
-    </Card>
-    <Card title="Conditions for Perfect Competition" cn="完全競爭條件（偏離即解釋利潤）" color="slate">
-      <div className="grid grid-cols-2 gap-1 text-xs">{["No entry/exit barriers","Homogeneous products","No brands","No scale/scope/learning economies","No preferential relationships","No informational asymmetries","No transportation costs","No collusion"].map(c=>(<div key={c} className="flex items-center gap-1"><span className="text-red-500">✗</span> {c}</div>))}</div>
-      <div className="mt-2 text-xs font-semibold text-center">Departures from these conditions → explain why profits exist</div>
-    </Card>
-    <Card title="Barriers to Entry & Exit (Ch.4)" cn="進入與退出障礙——利潤差異持續的原因" color="purple">
-      <div className="grid grid-cols-2 gap-3 text-xs">
-        <div><div className="font-semibold text-purple-700 mb-1">Entry Barriers 進入障礙:</div><ul className="space-y-0.5 list-disc list-inside"><li>Economies of scale, learning, scope</li><li>Brands and differentiation</li><li>Patents and government regulation</li><li>Access to inputs or distribution</li><li>Expected retaliation from incumbents</li></ul></div>
-        <div><div className="font-semibold text-purple-700 mb-1">Exit Barriers 退出障礙:</div><ul className="space-y-0.5 list-disc list-inside"><li>Specialized assets</li><li>Strategic barriers (exit hurts another business)</li><li>Emotional barriers</li><li>Large costs of exiting</li></ul></div>
-      </div>
-      <div className="mt-2 bg-purple-50 border border-purple-300 rounded p-2 text-xs text-center font-semibold">"Barriers to entry and exit allow differences in the profitability of industries to persist" (Ch.4 Takeaway)</div>
-    </Card>
-    <Card title="Table 4.3: Features by Competition Type (Ch.4)" cn="各競爭型態的特徵對照" color="slate">
-      <div className="overflow-x-auto"><table className="w-full text-xs"><thead><tr className="bg-slate-100"><th className="text-left p-1">Feature</th><th className="p-1">Subsidized</th><th className="p-1">Perfect</th><th className="p-1">Hyper</th><th className="p-1">Oligopoly</th><th className="p-1">Monopoly</th></tr></thead>
-      <tbody className="divide-y">{[["Entry","Subsidized","Free","Feasible","Limited","No entry"],["Products","Inferior may succeed","Homogeneous","Distinguishable briefly","Distinguishable long","Unique"],["Brands","Subsidies overcome","None","Temporary","Sustained","Unique"],["Scale/Scope/Learning","Subsidies overcome","None","Limited","Potentially large","Very large"],["Customer relations","Subsidies overcome","None","Temporary adv.","Sustained adv.","Exclusive"],["Info asymmetries","Subsidies overcome","None","Temporary","Sustained","Complete"],["Collusion","Not specified","None","Little","Possible","Total"],["Profit","Very low","Low","Low-moderate","Pot. high sustained","High sustained"]].map(([f,...vs])=>(<tr key={f}><td className="p-1 font-semibold">{f}</td>{vs.map((v,i)=><td key={i} className="p-1 text-center">{v}</td>)}</tr>))}</tbody></table></div>
-    </Card>
-    <Card title="Competitor Envelope Analysis — CEA (Ch.4)" cn="競爭者包絡線分析" color="rose">
-      <div className="text-xs mb-2">Assess competitors as they <strong>might be</strong>, not just as they are today. "They do strategy too."</div>
-      <div className="grid grid-cols-2 gap-1 text-xs">{["What if competitors optimized their activities?","What if they fully leveraged resources & knowledge?","What if they overcame strategic shortcomings?","What if taken over by savvy, deep-pocketed firms?","What would WE do if we managed the competitors?","Also: look for unmet demand / underserved segments"].map(q=>(<div key={q} className="bg-rose-50 border rounded p-1.5">{q}</div>))}</div>
-    </Card>
-    <Card title="Competition on Quality vs. Price (Lecture Ch.4)" cn="品質競爭 vs. 價格競爭" color="green">
-      <div className="text-xs text-center font-semibold">"Competition based on quality, features, etc. generally leads to better industry profitability than competition solely on price."</div>
-    </Card>
-  </div>);
-}
-
-function MesoCluster() {
-  return (<div>
-    <SectionTitle cn="群聚／中觀層級">Meso / Cluster Level (Ch.5)</SectionTitle>
-    <Card title='This level is "often missed in strategic analyses" (Ch.2)' cn="此層「在策略分析中常被遺漏」" color="amber"><div className="text-xs">A distinct source of performance involving suppliers, customers, related industries, spillovers, complementarities, substitutes, shared resources/activities.</div></Card>
-    <div className="grid grid-cols-2 gap-3 mb-4">
-      <div className="bg-green-50 border-2 border-green-400 rounded-lg p-4"><div className="font-bold text-green-700 text-center mb-2">Complementarities 互補</div><div className="text-center text-2xl mb-2">📈</div><div className="text-xs space-y-1"><div>→ <strong>EXPAND</strong> demand 擴張需求</div><div>→ Make focal product more valuable</div><div>→ Create shared efficiencies</div></div></div>
-      <div className="bg-red-50 border-2 border-red-400 rounded-lg p-4"><div className="font-bold text-red-700 text-center mb-2">Substitutes 替代</div><div className="text-center text-2xl mb-2">📉</div><div className="text-xs space-y-1"><div>→ <strong>CONTRACT</strong> demand 壓縮需求</div><div>→ Replace <strong>function</strong>, not just form</div><div>→ Compete for customer's <strong>time or money</strong></div></div></div>
-    </div>
-    <Card title="Bargaining Power Framework" cn="議價力框架（買方與供應商）" color="blue">
-      <div className="grid grid-cols-2 gap-3 text-xs">
-        <div><div className="font-semibold text-blue-700 mb-1">Intrinsic Bargaining Strength:</div><ul className="space-y-0.5 list-disc list-inside"><li>Concentration</li><li>Volume of purchases</li><li>Availability of substitutes</li><li>Switching costs</li><li>Vertical integration threat</li><li>Pull-through to end-user</li></ul></div>
-        <div><div className="font-semibold text-blue-700 mb-1">Price Sensitivity:</div><ul className="space-y-0.5 list-disc list-inside"><li>Cost / total purchases</li><li>Strategy and positioning</li><li>Buyer/supplier profitability</li><li>Impact on quality / performance</li></ul></div>
-      </div>
-    </Card>
-    <Card title="Business Ecosystem Warning (Lecture Ch.5 Part 2)" cn="商業生態系警告" color="red">
-      <div className="bg-red-100 border border-red-300 rounded p-3 text-center">
-        <div className="font-bold text-red-800 text-sm">Where is value GENERATED, APPROPRIATED, and DEFENDED?</div>
-        <div className="text-xs text-red-700 mt-1">價值在哪裡被創造、攫取、守住？</div>
-        <div className="text-xs text-slate-600 mt-2">"Asset light" and ecosystem strategies can be dangerous if firms don't understand this.</div>
-      </div>
-    </Card>
-    <Card title={'"It\'s a Wonderful Life" Test'} cn="如果這個角色不存在，世界會如何？" color="purple"><div className="text-xs">Imagine removing a player from the ecosystem. If the industry/firm would be significantly worse off without them, that player has substantial power. If the industry barely notices, they do not.</div></Card>
-    <Card title='"When Will Buyers Get the Value?"' cn="買方何時會取得價值？" color="amber">
-      <div className="text-xs space-y-1"><div>→ When we do NOT bring substantial value to the table</div><div>→ When we do NOT bring something unique</div><div>→ When the pie WITH us is not much higher than WITHOUT us</div><div>→ When we need them more than they need us</div><div>→ When they can demand a price decrease and we cannot resist</div><div>→ Buyer industry far from perfect competition → buyers have power</div><div>→ Buyer industry close to perfect competition → buyers have little power</div></div>
-      <div className="mt-2 text-xs text-slate-500 italic">Same logic applies in reverse for supplier power.</div>
-    </Card>
-    <Card title="Meso Driver Checklist" cn="Meso driver 清單" color="cyan"><div className="grid grid-cols-2 gap-1 text-xs">{["Demand & Customers","Inputs & Suppliers","Shared Resources","Shared Activities","Complementarities","Substitutes","Meso Policies","Meso Institutions"].map(d=>(<div key={d} className="bg-white border rounded p-2 text-center">{d}</div>))}</div></Card>
-  </div>);
-}
-
-function MacroMeta() {
-  return (<div>
-    <SectionTitle cn="國家層級與超國家層級">Macro & Meta Levels (Ch.6–Ch.7)</SectionTitle>
-    <Card title="MACRO / NATIONAL (Ch.6)" cn="國家層級" color="blue">
-      <div className="grid grid-cols-2 gap-2 mb-3">{[{t:"Macroeconomics",d:"Demand, fiscal, inflation, rates, exchange, unemployment"},{t:"Gov't Policies",d:"Monetary, fiscal, tax, industrial, trade, education, S&T, competition, IP, regulatory"},{t:"Institutions",d:"Design (policy bureaus) · Support (education, research) · Governance (legal, regulatory, admin)"},{t:"Civil Society",d:"Social structures, attitudes, cultural attributes, stability"}].map(x=>(<div key={x.t} className="bg-blue-50 border rounded p-3"><div className="font-bold text-blue-700 text-sm">{x.t}</div><div className="text-xs text-slate-600 mt-1">{x.d}</div></div>))}</div>
-      <div className="bg-amber-50 border border-amber-300 rounded p-3 text-xs"><strong>Ch.6 Lecture Notes:</strong> Look at <Tag color="amber">Levels</Tag> <Tag color="amber">Trends</Tag> <Tag color="amber">Disruption</Tag> <Tag color="amber">Non-linear change</Tag></div>
-      <div className="mt-2 text-xs text-slate-500"><strong>Two-edged sword:</strong> Good macro helps all firms; some firms profit from frictions in weak environments.</div>
-    </Card>
-    <Card title="META / SUPRANATIONAL (Ch.7)" cn="超國家層級" color="purple"><div className="grid grid-cols-3 gap-1 text-xs mb-3">{["Geopolitics","Global Technology","Global Economics","Social & Environmental","Multilateral Orgs (WTO, WB, IMF)","Trade Blocs (EU, USMCA, RCEP)","Foreign Governments","Int'l Financial Flows (FDI, portfolio)","Foreign MNCs","Other Groups (NGOs)"].map(d=>(<div key={d} className="bg-purple-50 border rounded p-2 text-center">{d}</div>))}</div></Card>
-    <Card title="Writing Standard for Macro & Meta" cn="作答標準" color="red">
-      <div className="grid grid-cols-2 gap-3 text-xs">
-        <div className="bg-red-50 border border-red-300 rounded p-3"><div className="font-bold text-red-700 mb-1">DO NOT write ✗</div><div>"The economy was bad"</div><div>"Geopolitics mattered"</div></div>
-        <div className="bg-green-50 border border-green-300 rounded p-3"><div className="font-bold text-green-700 mb-1">DO write ✓</div><div>Show <strong>transmission mechanism</strong>: HOW it reaches demand, cost, inputs, finance, regulation, bargaining power, strategic room</div></div>
-      </div>
-    </Card>
-  </div>);
-}
-
-function VrioArk() {
-  return (<div>
-    <SectionTitle cn="Q2 準備：VRIO 延伸到 ARK">Q2: VRIO Extended to ARK in SPARK</SectionTitle>
-    <Card title="VRIO Framework (extended)" cn="VRIO 架構（本課延伸版）" color="purple">
-      <div className="grid grid-cols-4 gap-2 mb-3">{[{l:"V",w:"aluable",d:"Improves WTP or lowers cost vs. competitors"},{l:"R",w:"are",d:"Few firms control it"},{l:"I",w:"nimitable",d:"Costly for others to obtain"},{l:"O",w:"rganized",d:"Firm captures value from it"}].map(v=>(<div key={v.l} className="bg-purple-50 border-2 border-purple-300 rounded-lg p-3 text-center"><div className="text-2xl font-black text-purple-700">{v.l}</div><div className="text-xs font-semibold">{v.l}{v.w}</div><div className="text-xs text-slate-600 mt-1">{v.d}</div></div>))}</div>
-      <div className="bg-purple-100 border border-purple-300 rounded p-2 text-center text-sm font-semibold">In STRT 6200: VRIO applies to <Tag color="purple">Resources</Tag> <strong>AND</strong> <Tag color="purple">Activities</Tag> <strong>AND</strong> <Tag color="purple">Knowledge</Tag> = the <strong>ARK in SPARK</strong></div>
-    </Card>
-    <Card title="Q2A: Home Alone — Professor's Own Answer" cn="教授本人的答案框架（Lecture Notes Ch.5 Part 1, slide 20）" color="green">
-      <div className="text-xs text-green-700 font-semibold mb-3 text-center">✅ VERIFIED: Lecture Notes Ch.5 Part 1, slide 20</div>
-      <div className="space-y-3">
-        {[{m:"Home Alone 1",pay:"$100K",sc:"THE PART",bg:"bg-blue-50 border-blue-300",logic:"Scarce commodity = the role itself. Actor unproven. Talent not yet V-R-I. Studio bears risk. Low bargaining power."},{m:"Home Alone 2",pay:"$13.7M",sc:"THE KID",bg:"bg-green-50 border-green-300",logic:"Scarce commodity = Culkin himself. After hit: V (proven revenue), R (only one Culkin), I (emotional bond irreplaceable). Studio Organized via sequel. Full VRIO → resource holder appropriates value."},{m:"Home Alone 3",pay:"$0",sc:"THE FRANCHISE",bg:"bg-amber-50 border-amber-300",logic:"Scarce commodity = the franchise brand itself. Actor substitutable at high price. VRIO resource has a max price. Franchise > any single actor."}].map(h=>(<div key={h.m} className={`border-2 ${h.bg} rounded-lg p-4`}><div className="flex items-center justify-between mb-2"><div className="font-bold text-lg">{h.m}</div><div className="font-bold text-lg">{h.pay}</div></div><div className="bg-white rounded px-3 py-2 text-center mb-2"><span className="text-xs text-slate-500">Scarce commodity:</span><span className="font-black text-lg ml-2">{h.sc}</span></div><div className="text-xs text-slate-700">{h.logic}</div></div>))}
-      </div>
-      <div className="mt-3 bg-blue-50 border border-blue-200 rounded p-2 text-xs"><strong>Jennifer Lawrence parallel (slide 21):</strong> Hunger Games $500K → HG2 $10M → HG3+4 >$40M. Same VRIO escalation.</div>
-      <div className="mt-2 text-xs font-semibold text-center">Key insight: What is "scarce" SHIFTS over time. VRIO is dynamic. Bargaining power follows scarcity.</div>
-    </Card>
-    <Card title="Q2B: Natalie Portman — Three-Picture Deal" cn="問的是外部影響工具" color="blue">
-      <div className="text-xs space-y-2"><div className="flex items-start gap-2"><Tag color="amber">Micro</Tag> <span>Film industry: after franchise success, actor's resource becomes VRIO → compensation escalates</span></div><div className="flex items-start gap-2"><Tag color="cyan">Meso</Tag> <span>Bargaining escalation is structural in entertainment</span></div><div className="flex items-start gap-2"><Tag color="green">Logic</Tag> <span>Lucas Films locked Portman in BEFORE she became identified with Queen Amidala = <strong>forward contract</strong> on potentially-VRIO resource.</span></div></div>
-    </Card>
-    <Card title="Q2C: Hollywood Flops — Limits of VRIO" cn="VRIO 的侷限" color="red">
-      <div className="space-y-2 text-xs">{[["1","VRIO necessary but not sufficient","Great actor + bad script = flop. Activity system matters as much as resources."],["2",'"O" is where flops happen',"Studios have VRIO resources but fail to Organize. Bad decisions = organizational failure."],["3","Demand uncertainty = industry characteristic","Audience demand fundamentally unpredictable. No resource eliminates this."],["4","Resources not automatically synergistic","Multiple VRIO resources combined ≠ guaranteed value for customers."],["5","VRIO explains portfolios, not singles","Disney avg = more hits than misses. John Carter failing ≠ VRIO disproved."]].map(([n,t,d])=>(<div key={n} className="flex items-start gap-2"><div className="bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold flex-shrink-0">{n}</div><div><strong>{t}.</strong> {d}</div></div>))}</div>
-    </Card>
-  </div>);
-}
-
-function EtaSwatch() {
-  return (<div>
-    <SectionTitle cn="Q3 準備：ETA / Swatch">Q3: ETA / Swatch Group</SectionTitle>
-    <Card title="Key Facts to Know Cold" cn="必背事實" color="blue">
-      <div className="grid grid-cols-2 gap-2 text-xs">{[["New movement","5 years + CHF 10M"],["ETA position","Dominant in Swiss market"],["Forced to supply","By Swiss Competition Commission (1990s)"],["Swatch investment","Billions of CHF expanding ETA"],["Hayek quote","Like BMW supplying engines to Audi & Mercedes"],["Pricing","ETA not allowed to raise prices without authority permission"],["Phase-out timeline","ébauches → 2008 no reduction → 2011; movements → 85% of 2010 by 2012; 50% of 2013 levels gradual"],["Rivals responded","Cloned (patents expired) or developed own capacity"],["ETA share by 2019","33%"],["Critical final fact","Movements MORE CONCENTRATED than watches"]].map(([k,v])=>(<div key={k} className="bg-blue-50 border rounded p-2"><div className="font-semibold text-blue-700">{k}</div><div className="text-slate-700">{v}</div></div>))}</div>
-    </Card>
-    <Card title="ETA Timeline" cn="時間軸" color="slate">
-      <div className="relative"><div className="absolute left-3 top-0 bottom-0 w-0.5 bg-slate-300"></div><div className="space-y-3 ml-8">{[["1990s","Commission rules: ETA must supply any Swiss firm","red"],["2000","New movement estimate: 5yr + CHF 10M","blue"],["2002–05","Swatch tries to phase out ébauche sales","amber"],["2008","Forced to keep supplying, no quantity reduction","red"],["2011","Allowed to stop ébauches","amber"],["2012","Movements reduced to 85% of 2010","amber"],["2013","Gradual reduction to 50% of 2013 volumes","amber"],["2019","ETA share = 33%; rivals have own capacity","green"],["Dec 2019","Commission: stop supplying","red"],["Jul 2020","Reversed: ETA free to sell or not","green"]].map(([yr,ev,c])=>(<div key={yr} className="flex items-start gap-2 relative"><div className={`absolute -left-8 w-4 h-4 rounded-full border-2 ${c==='red'?'bg-red-400 border-red-600':c==='green'?'bg-green-400 border-green-600':c==='amber'?'bg-amber-400 border-amber-600':'bg-blue-400 border-blue-600'}`}></div><div><span className="font-bold text-xs">{yr}:</span><span className="text-xs ml-1">{ev}</span></div></div>))}</div></div>
-    </Card>
-    <div className="grid grid-cols-2 gap-3 mb-4">
-      <Card title="A. Why limit sales?" color="red"><div className="text-xs space-y-1"><div>→ Raise rivals' costs (5yr + CHF 10M barrier)</div><div>→ Stop subsidizing competitors</div><div>→ Fewer competitors → less rivalry → higher Swatch brand profits</div><div>→ ETA shifts from regulated utility to proprietary advantage</div></div></Card>
-      <Card title="B. Why continue selling?" color="green"><div className="text-xs space-y-1"><div>→ Amortize massive fixed costs; achieve scale</div><div>→ Maintain competitor dependency</div><div>→ Revenue stream may exceed competitive cost</div><div>→ Avoid further antitrust fines</div></div></Card>
-      <Card title="C. Commission impact?" color="amber"><div className="text-xs space-y-1"><div>→ Lowered entry barriers → more competitors</div><div>→ Shifted competition: manufacturing → brand/design/marketing</div><div>→ Stimulated alternative development (cloning, self-dev)</div><div>→ Likely reduced avg profitability in assembly/branding</div></div></Card>
-      <Card title="D. Movement vs Watch economics?" color="purple"><div className="text-xs space-y-1"><div><strong>Movements:</strong> High fixed cost, massive scale → few firms → oligopoly</div><div><strong>Watches:</strong> Brand differentiation, many segments → many firms → segmented</div><div className="font-semibold mt-1">Core: Movement economics → natural concentration. Watch economics → natural fragmentation.</div></div></Card>
-    </div>
-    <Card title="Movement vs Watch Economics Comparison" color="slate">
-      <table className="w-full text-xs"><thead><tr><th className="text-left pb-1"></th><th className="text-left pb-1 text-blue-700">Movements 機芯</th><th className="text-left pb-1 text-amber-700">Watches 手錶</th></tr></thead>
-      <tbody className="divide-y">{[["Scale economies","Very high (5yr, CHF 10M; billions invested)","Lower (assembly/branding at smaller scale)"],["Entry barriers","Very high","Lower with movement access"],["Viable firms","Few → oligopoly","Many → segmented competition"],["Value capture","Manufacturing efficiency + scarcity","Brand + design + customer relationships"]].map(([f,m,w])=>(<tr key={f}><td className="py-1 pr-2 font-semibold">{f}</td><td className="py-1 pr-2">{m}</td><td className="py-1">{w}</td></tr>))}</tbody></table>
-    </Card>
-  </div>);
-}
-
-function CramSheet() {
-  return (<div>
-    <SectionTitle cn="考前速記＋最終確認">Cram Sheet & Final Checklist</SectionTitle>
-    <div className="bg-slate-900 text-white rounded-xl p-5 mb-4">
-      <div className="text-center font-bold text-xl mb-4 text-yellow-300">17 THINGS TO KNOW COLD</div>
-      <div className="space-y-2">
-        {[["1","Performance is RELATIVE","績效是相對的","blue"],["2","Comprehensive, integrative, dynamic, question-based","全面、整合、動態、問題導向","blue"],["3","Five levels: Industry → Meso → Macro → Meta → Firm","分析順序：產業→群聚→國家→超國家→企業","blue"],["4","Levels AND trends","水準與趨勢","blue"],["5","Industry = useful output to customer + direct competition","產業＝客戶收到的有用輸出＋直接競爭","amber"],["6","Full positioning = price AND cost","完整定位＝價格加成本","green"],["7","SPARK: Scope, Positioning, Activities, Resources, Knowledge","SPARK","green"],["8","VRIO extends to ARK in SPARK","VRIO延伸到SPARK中的ARK","purple"],["9","Complementors EXPAND; substitutes CONTRACT demand","互補擴張，替代壓縮","cyan"],["10","Ecosystems: where is value generated, appropriated, defended?","價值在哪裡創造、攫取、守住？","red"],["11","Macro: levels, trends, disruption, non-linearity","總體：水準、趨勢、衝擊、非線性","blue"],["12","Q2 Home Alone: THE PART → THE KID → THE FRANCHISE","","green"],["13","Q3 ETA: 5yr, CHF 10M, 33% by 2019, movements more concentrated","","amber"],["14","Barriers to entry/exit allow profit differences to PERSIST","進入退出障礙使利潤差異持續","purple"],["15","Industry Economics: WHY possible, WHERE from, WHAT shifts it","產業經濟：為何有可能、來源、何時變動","rose"],["16","General vs. Specific advantages → explains hustle logic","一般性 vs. 特定性優勢","cyan"],["17",'"It\'s a Wonderful Life" test: remove a player, does it matter?',"移除一個角色，會有影響嗎？","purple"]].map(([n,en,cn,c])=>{
-          const colors={blue:"bg-blue-800",green:"bg-green-800",amber:"bg-amber-800",purple:"bg-purple-800",red:"bg-red-800",cyan:"bg-cyan-800",rose:"bg-rose-800"};
-          return(<div key={n} className={`${colors[c]} rounded-lg px-4 py-2 flex items-center gap-3`}><div className="bg-white text-slate-900 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0">{n}</div><div className="flex-1"><span className="font-semibold text-sm">{en}</span>{cn&&<span className="text-xs text-slate-300 ml-2">{cn}</span>}</div></div>);
-        })}
-      </div>
-    </div>
-    <Card title="Mistakes That Cost Points" cn="最容易失分的錯誤" color="red">
-      <div className="grid grid-cols-2 gap-2 text-xs">{["Industry by tech, not useful output","Performance as absolute, not relative","Static analysis, no trends","Levels listed without HOW/WHY mechanism","Meso confused with micro",'"Better resources" without WTP/cost effect',"Positioning from price alone or cost alone","Industry economics as static snapshot, not dynamic structure"].map(m=>(<div key={m} className="flex items-start gap-1"><span className="text-red-500 flex-shrink-0">✗</span><span>{m}</span></div>))}</div>
-    </Card>
-    <Card title="Final 60-Minute Review Plan" cn="考前最後60分鐘複習計劃" color="green">
-      <div className="space-y-3">{[{t:"0–15 min",a:"MEMORIZE",d:"17 items above. Performance is relative. Five levels + drivers. SPARK. ARK in SPARK. Price + cost. Complements vs substitutes."},{t:"15–30 min",a:"WRITE FROM MEMORY",d:"Five levels + all drivers. Competition spectrum. Macro institutions (design/support/governance). Home Alone: part/kid/franchise. ETA: 5yr/10M/33%/more concentrated."},{t:"30–45 min",a:"PRACTICE 3 MINI-ANSWERS",d:"One Five-Level answer. One VRIO/ARK answer. One ETA answer. Each 6–8 sentences."},{t:"45–60 min",a:"CHECK ONLY TWO THINGS",d:"Did I explain HOW? Did I explain WHY?"}].map(p=>(<div key={p.t} className="bg-green-50 border border-green-200 rounded-lg p-3"><div className="flex items-center gap-2 mb-1"><Tag color="green">{p.t}</Tag><span className="font-bold text-green-800 text-sm">{p.a}</span></div><div className="text-xs text-slate-700">{p.d}</div></div>))}</div>
-    </Card>
-    <Card title="Final Checklist" cn="最後確認清單" color="amber">
-      <div className="space-y-2 text-xs">{["Identify 3 more cases from Sessions 1–8 for Q1 (biggest gap)","Prepare for unknown Q4 (Five Levels + SPARK on unfamiliar scenario)","Verify Seiko details against your own case copy","Write from memory: five levels + drivers + SPARK + competition types + HA sequence + ETA facts","Practice 3 mini-answers (one per question type)","Every answer: HOW? and WHY?"].map((c,i)=>(<div key={i} className="flex items-start gap-2"><div className="w-4 h-4 border-2 border-amber-400 rounded flex-shrink-0 mt-0.5"></div><span>{c}</span></div>))}</div>
-    </Card>
-    <div className="bg-slate-100 rounded-lg p-4 text-center">
-      <div className="font-bold text-slate-800 text-sm mb-1">The reflex to bring into the exam room:</div>
-      <div className="text-slate-700 text-sm"><strong>Identify the level → Identify the driver → Explain the mechanism → Judge the performance effect</strong></div>
-      <div className="text-xs text-slate-500 mt-1">先判斷層級 → 再抓 driver → 再寫作用機制 → 最後判斷對績效的影響</div>
-    </div>
-    <div className="mt-4 text-xs text-slate-400 text-center">All framework content verified against Ch.1–Ch.7, lecture notes, practice exam. Home Alone from Lecture Notes Ch.5 Part 1 slide 20. Interactive diagrams: Enright 2021. No external sources.</div>
-  </div>);
-}
-
-const tabContent = {"Overview":Overview,"Five Levels":FiveLevels,"SPARK & Position":SparkPosition,"Industry":IndustryTab,"Meso/Cluster":MesoCluster,"Macro & Meta":MacroMeta,"Q2: VRIO/ARK":VrioArk,"Q3: ETA/Swatch":EtaSwatch,"Cram Sheet":CramSheet};
-
-export default function App() {
-  const [tab, setTab] = useState("Overview");
-  const Content = tabContent[tab];
-  return (
-    <div className="bg-white min-h-screen">
-      <div className="bg-slate-900 text-white px-4 py-3">
-        <div className="text-lg font-bold">STRT 6200 Midterm Study Guide</div>
-        <div className="text-xs text-slate-400">Enhanced Edition · March 11, 2026 · Closed Book</div>
-      </div>
-      <div className="overflow-x-auto border-b bg-slate-50">
-        <div className="flex min-w-max">{tabs.map(t=>(<button key={t} onClick={()=>setTab(t)} className={`px-3 py-2 text-xs font-semibold whitespace-nowrap border-b-2 transition-colors ${tab===t?"border-blue-600 text-blue-700 bg-white":"border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100"}`}>{t}</button>))}</div>
-      </div>
-      <div className="p-4 max-w-3xl mx-auto"><Content /></div>
     </div>
   );
 }
